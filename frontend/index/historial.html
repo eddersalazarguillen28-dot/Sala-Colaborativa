@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/historial.css">
+    <title>Historial</title>
+</head>
+<body>
+    <div class="workspace-container">
+
+        <!--PRUEBA-->
+
+        <div class="main-content">
+            <header class="top-bar">
+                <span>Sala colaborativa</span>
+                <span class="server-badge">WebSockets Conectado</span>
+            </header>
+
+            <!--Pizarra-->
+            <div class="canvas-container">
+                <canvas id="pizarraCanvas" width="900" height="600"></canvas>
+
+            </div>
+
+
+        </div>
+
+
+        
+        
+        <!--SI-->
+
+        <!--Panel lateral-->
+        <aside class="modulo3-sidebar">
+            <!--Encabezado del panel-->
+            <div class="sidebar-header">
+                <h5>Sesión y control</h5>
+                <span class="status-online" id="status-badge">En línea</span>
+
+            </div>
+            <!--Seccion1:Exportacion--> 
+            <div class="panel-card">
+                <span class="panel-titulo">Exportar pantalla</span>
+                <div class="btn-group-costum">
+                    <button id="btn-export-pdf" class="btn btn-outline">
+                        Imagen PNG
+                    </button>
+
+                    <button id="btn-export-pdf" class="btn btn-outline">
+                        Documento PDF
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!--Seccion2:participantes-->
+            <div class="panel-card">
+                <div class="participantes-header">
+                    <span class="panel-titulo">Participantes</span>
+                    <span class="count-badge" id="user-count">1</span>
+                </div>
+
+                <ul id="user-list" class="user-list">
+                    <li class="user-item">
+                        <span><span class="user-indicator"></span>Estefanía (Tú)</span>
+                        <span class="role-badge">Anfitrión</span>
+                    </li>
+                </ul>
+
+            </div>
+
+            <!--Seccion 3-Historial-->
+            <div class="panel-card historial-card">
+                <span class="panel-titulo">Historial de actividades</span>
+                <div id="actividad-historial" class="historial-container">
+                    <div class="historial-item">
+                        <span class="tiempo-historial">10:00 am</span>
+                        <p style="margin:0;"><strong>Sistema:</strong> Interfaz inicializada</p>
+
+                    </div>
+                    <div class="historial-item">
+                        <span class="tiempo-historial">10:01 am</span>
+                        <p style="margin:0;"><strong>Estefania:</strong> Módulo 3 cargado</p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+
+        </aside>
+
+    </div>
+
+    <!--Contenedor de notificaciones dinamicas-->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script src="../javascripts/historial.js"></script>
+</body>
+</html>
