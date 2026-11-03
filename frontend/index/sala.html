@@ -7,6 +7,7 @@
     <title>Sala</title>
 
     <link rel="stylesheet" href="../css/sala.css">
+    <link rel="stylesheet" href="../css/pizarra.css">
 </head>
 
 <body>
@@ -34,11 +35,47 @@
                         Lápiz
                     </button>
 
-                    <button id="btnBorrador" class="herramienta">
-                        Borrador
-                    </button>
+        <div class="grupo-herramientas">
+            <label>Colores:</label>
 
-                </div>
+            <button class="color-opcion seleccionado"
+                data-color="#000000"
+                style="background-color: #000000;"
+                title="Negro">
+            </button>
+
+            <button class="color-opcion"
+                data-color="#ef4444"
+                style="background-color: #ef4444;"
+                title="Rojo">
+            </button>
+
+            <button class="color-opcion"
+                data-color="#3b82f6"
+                style="background-color: #3b82f6;"
+                title="Azul">
+            </button>
+
+            <button class="color-opcion"
+                data-color="#22c55e"
+                style="background-color: #22c55e;"
+                title="Verde">
+            </button>
+
+            <button class="color-opcion"
+                data-color="#eab308"
+                style="background-color: #eab308;"
+                title="Amarillo">
+            </button>
+
+            <div class="selector-personalizado">
+                <label for="colorLapiz" title="Elegir otro color">
+                    +
+                </label>
+                <input type="color" id="colorLapiz" value="#000000">
+            </div>
+
+        </div>
 
                 <div class="grupo-herramientas">
 
