@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingreso - Sala Colaborativa</title>
+
+    <link rel="stylesheet" href="../css/index.css">
+</head>
+<body>
+
+    <main class="contenedor-ingreso">
+        <div class="tarjeta-ingreso">
+            <div class="encabezado-ingreso">
+                <h1>Sala Colaborativa</h1>
+                <p>Trabaja y comunicate con tu equipo en tiempo real</p>
+            </div>
+
+            <form id="formularioIngreso">
+                <div class="campo">
+                    <label for="nombreUsuario">Tu nombre</label>
+                    <input type="text" id="nombreUsuario" placeholder="Escribe tu nombre" required>
+                </div>
+
+                <div class="campo">
+                    <label for="nombreSala">Nombre de la sala</label>
+                    <input type="text" id="nombreSala" placeholder="Ej. Proyecto de programación" required>
+                </div>
+
+                <button type="submit">Ingresar a la sala</button>
+            </form>
+        </div>
+    </main>
+    
+
+    <script src="../javascripts/index.js" defer></script>
+</body>
+</html>

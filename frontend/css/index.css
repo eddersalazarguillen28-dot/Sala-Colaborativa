@@ -1,0 +1,98 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #111b37, #19196c);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.contenedor-ingreso {
+    width: 100%;
+    max-width: 450px;
+}
+
+.tarjeta-ingreso {
+    background: #ffffff;
+    padding: 40px 35px;
+    border-radius: 16px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.3);
+}
+
+.encabezado-ingreso {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+.encabezado-ingreso h1 {
+    color: #19196c;
+    font-size: 28px;
+    margin-bottom: 12px;
+}
+
+.encabezado-ingreso p {
+    color: #666666;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 22px;
+}
+
+.campo label {
+    padding: 13px;
+    border: 1px solid #cccccc;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.campo input{
+    border-color: #365bd6;
+    border-radius: 5px;
+    padding: 3px;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.campo input:focus {
+    font-size: 16px;
+}
+
+#formularioIngreso button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    background: #365bd6;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3;
+}
+
+#formularioIngreso button:hover {
+    background: #19196c;
+}
+
+@media (max-width: 480px) {
+    .tarjeta-ingreso {
+        padding: 30px 22px;
+    }
+
+    .encabezado-ingreso h1 {
+        font-size: 24px;
+    }
+}

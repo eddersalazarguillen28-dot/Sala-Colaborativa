@@ -1,69 +1,105 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sala</title>
+
+    <link rel="stylesheet" href="../css/sala.css">
 </head>
+
 <body>
-    <section class="contenedor-pizarra">
 
-    <header class="encabezado-pizarra">
-        <div>
-            <h1>Pizarra colaborativa</h1>
-            <p>Espacio de dibujo compartido</p>
-        </div>
-    </header>
+    <main class="contenedor-sala">
+        <section class="contenedor-pizarra">
 
-    <div class="barra-herramientas">
+            <header class="encabezado-pizarra">
+                <div>
+                    <h1>Pizarra colaborativa</h1>
+                    <p id="nombreSalaActual">Espacio de dibujo compartido</p>
 
-        <div class="grupo-herramientas">
+                    <div class="informacion-usuario">
+                        <span>Participante:</span>
+                        <strong id="usuarioActual">Usuario</strong>
+                    </div>
+                </div>
+            </header>
 
-            <button id="btnLapiz" class="herramienta activa">
-                Lápiz
-            </button>
+            <div class="barra-herramientas">
 
-            <button id="btnBorrador" class="herramienta">
-                Borrador
-            </button>
+                <div class="grupo-herramientas">
 
-        </div>
+                    <button id="btnLapiz" class="herramienta activa">
+                        Lápiz
+                    </button>
 
-        <div class="grupo-herramientas">
+                    <button id="btnBorrador" class="herramienta">
+                        Borrador
+                    </button>
 
-            <label for="colorLapiz">Color:</label>
-            <input type="color" id="colorLapiz" value="#000000">
+                </div>
 
-            <label for="grosorLapiz">Grosor:</label>
-            <input
-                type="range"
-                id="grosorLapiz"
-                min="1"
-                max="30"
-                value="4"
-            >
+                <div class="grupo-herramientas">
 
-            <span id="valorGrosor">4 px</span>
+                    <label for="colorLapiz">Color:</label>
+                    <input type="color" id="colorLapiz" value="#000000">
 
-        </div>
+                    <label for="grosorLapiz">Grosor:</label>
+                    <input type="range" id="grosorLapiz" min="1" max="30" value="4">
 
-        <div class="grupo-herramientas">
+                    <span id="valorGrosor">4 px</span>
 
-            <button id="btnLimpiar" class="btn-limpiar">
-                Limpiar pizarra
-            </button>
+                </div>
 
-        </div>
+                <div class="grupo-herramientas">
 
-    </div>
+                    <button id="btnLimpiar" class="btn-limpiar">
+                        Limpiar pizarra
+                    </button>
 
-    <div class="contenedor-canvas">
-        <canvas id="pizarraCanvas"></canvas>
-    </div>
+                </div>
 
-</section>
+            </div>
 
-<script src="../javascripts/pizarra.js" defer></script>
+            <div class="contenedor-canvas">
+                <canvas id="pizarraCanvas"></canvas>
+            </div>
+        </section>
 
+        <aside class="panel-chat">
+            <header class="encabezado-chat">
+                <h2>Chat de la sala</h2>
+                <p>Comunícate con el equipo</p>
+            </header>
+
+            <section class="contenido-chat">
+                <div class="participantes">
+                    <h3>Participantes</h3>
+
+                    <div class="lista-participantes" id="listaParticipantes">
+
+                    </div>
+                </div>
+
+                <section class="conversacion">
+                    <div class="mensajes" id="mensajes">
+
+                    </div>
+
+                    <form class="formuario-mensaje" id="formuarioMensaje">
+
+                        <input type="text" id="mensaje" placeholder="Escribe un mensaje..." autocomplete="off">
+
+                        <button type="submit">Enviar</button>
+                    </form>
+                </section>
+            </section>
+        </aside>
+    </main>
+
+    <script src="../javascripts/pizarra.js" defer></script>
+    <script src="../javascripts/sala.js" defer></script>
 </body>
+
 </html>
