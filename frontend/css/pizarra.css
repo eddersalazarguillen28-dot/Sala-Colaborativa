@@ -141,3 +141,63 @@ input[type="range"] {
     }
 
 }
+/* SELECTOR DE COLORES */
+
+.selector-colores {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.color-opcion {
+    width: 28px;
+    height: 28px;
+    border: 2px solid #d1d5db;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s, border 0.2s;
+}
+
+.color-opcion:hover {
+    transform: scale(1.15);
+}
+
+.color-opcion.seleccionado {
+    border: 3px solid #333;
+    outline: 2px solid #9ca3af;
+    outline-offset: 2px;
+}
+
+/* COLOR PERSONALIZADO */
+
+.selector-personalizado {
+    position: relative;
+    width: 30px;
+    height: 30px;
+}
+
+.selector-personalizado label {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 30px;
+    height: 30px;
+
+    background: #f3f4f6;
+    border: 2px dashed #9ca3af;
+    border-radius: 50%;
+
+    font-size: 22px;
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+.selector-personalizado input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sala</title>
+    <link rel="stylesheet" href="../css/pizarra.css">
 </head>
 <body>
     <section class="contenedor-pizarra">
@@ -30,9 +31,46 @@
         </div>
 
         <div class="grupo-herramientas">
+            <label>Colores:</label>
 
-            <label for="colorLapiz">Color:</label>
-            <input type="color" id="colorLapiz" value="#000000">
+            <button class="color-opcion seleccionado"
+                data-color="#000000"
+                style="background-color: #000000;"
+                title="Negro">
+            </button>
+
+            <button class="color-opcion"
+                data-color="#ef4444"
+                style="background-color: #ef4444;"
+                title="Rojo">
+            </button>
+
+            <button class="color-opcion"
+                data-color="#3b82f6"
+                style="background-color: #3b82f6;"
+                title="Azul">
+            </button>
+
+            <button class="color-opcion"
+                data-color="#22c55e"
+                style="background-color: #22c55e;"
+                title="Verde">
+            </button>
+
+            <button class="color-opcion"
+                data-color="#eab308"
+                style="background-color: #eab308;"
+                title="Amarillo">
+            </button>
+
+            <div class="selector-personalizado">
+                <label for="colorLapiz" title="Elegir otro color">
+                    +
+                </label>
+                <input type="color" id="colorLapiz" value="#000000">
+            </div>
+
+        </div>
 
             <label for="grosorLapiz">Grosor:</label>
             <input
