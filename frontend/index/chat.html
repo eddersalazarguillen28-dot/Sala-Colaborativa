@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - Sala Colaborativa</title>
+
+    <link rel="stylesheet" href="../css/chat.css">
+</head>
+
+<body>
+    <main class="contenedor-chat">
+
+        <header class="encabezado-chat">
+            <h1>Chat de la sala</h1>
+            <p>Sala de trabajo colaborativa</p>
+        </header>
+
+        <section class="contenido-chat">
+
+            <aside class="participantes">
+                <h2>Participantes</h2>
+
+                <div class="lista-participantes">
+                    <div class="participante">
+                        <span class="estado-conexion"></span>
+                        <span>Christopher</span>
+                    </div>
+                    <div class="participante">
+                        <span class="estado-conexion"></span>
+                        <span>Estefania</span>
+                    </div>
+                    <div class="participante">
+                        <span class="estado-conexion"></span>
+                        <span>Edder</span>
+                    </div>
+                    <div class="participante">
+                        <span class="estado-conexion"></span>
+                        <span>Kooper</span>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="conversacion">
+
+                <div class="mensajes">
+                    <div class="mensaje recibido">
+                        <span class="nombre-usuario">Edder</span>
+                        <p>Hola, como estan?</p>
+                    </div>
+                    <div class="mensaje enviado">
+                        <span class="nombre-usuario">Kooper</span>
+                        <p>Biennn</p>
+                    </div>
+                    <div class="mensaje recibido">
+                        <span class="nombre-usuario">Christopher</span>
+                        <p>Todo bien</p>
+                    </div>
+                </div>
+
+                <form class="formulario-mensaje">
+                    <input type="text" placeholder="Escribe un mensaje..." id="mensaje">
+
+                    <button type="button">
+                        Enviar
+                    </button>
+                </form>
+            </section>
+        </section>
+    </main>
+</body>
+
+</html>
