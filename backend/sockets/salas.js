@@ -52,6 +52,29 @@ function configurarSalas(io) {
       });
     });
 
+    socket.on("enviar-mensaje", ({ nombreSala, texto} = {}) => {
+
+      if (
+        typeof nombreSala !== "string" ||
+        typeof texto !== "string" ||
+        !texto.trim()
+      ) {
+        return;
+      }
+
+      if (!socket.rooms.has(nombreSala)) {
+        return;
+      }
+
+      const mensaje = {
+        id: socket.id,
+        nombre: nombresUsuarios.get(socket.id) || "Usuario",
+        texto: texto.trim(),
+        fecha: new Date().toISOString()
+      };
+
+      io.to(nombreSala).emit("nuevo-mensaje", mensaje);
+    });
 
     // Un usuario sale voluntariamente
     socket.on("salir-sala", (nombreSala) => {

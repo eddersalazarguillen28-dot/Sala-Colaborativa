@@ -312,6 +312,91 @@ input[type="range"] {
     touch-action: none;
 }
 
+.panel-video {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+}
+
+.encabezado-videollamada {
+    margin-bottom: 20px;
+}
+
+.encabezado-videollamada h2 {
+    color: #19196c;
+    margin-bottom: 5px;
+}
+
+.encabezado-videollamada p {
+    color: #666;
+    font-size: 14px;
+}
+
+.contenedor-videos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+}
+
+.video-participante {
+    position: relative;
+    width: 320px;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #222927;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.video-participante video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.video-participante span {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    color: rgba(0, 0, 0, 0.6);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 13px;
+}
+
+.controles-videollamada {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.controles-videollamada button {
+    border: none;
+    border-radius: 8px;
+    padding: 11px 18px;
+    background: #19196c;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.controles-videollamada button:hover {
+    background: #3030a0;
+}
+
+#btnSalirLlamada {
+    background: #dc2626;
+}
+
+#btnSalirLlamada:hover {
+    background: #b91c1c;
+}
+
 /* RESPONSIVE */
 
 @media (max-width: 900px) {
