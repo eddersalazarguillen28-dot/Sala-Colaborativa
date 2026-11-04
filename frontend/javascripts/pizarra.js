@@ -1,4 +1,3 @@
-
 /* =====================================
    ELEMENTOS HTML
 ===================================== */
@@ -14,6 +13,9 @@ const colorLapiz = document.getElementById("colorLapiz");
 const grosorLapiz = document.getElementById("grosorLapiz");
 const valorGrosor = document.getElementById("valorGrosor");
 
+const botonesColores = document.querySelectorAll(".color-opcion");
+const herramientaForma = document.getElementById("herramientaForma");
+
 /* =====================================
    VARIABLES
 ===================================== */
@@ -21,12 +23,14 @@ const valorGrosor = document.getElementById("valorGrosor");
 let dibujando = false;
 
 let herramientaActual = "lapiz";
+let formaActual = "";
 
 let colorActual = "#000000";
-
 let grosorActual = 4;
 
 let ultimoPunto = null;
+let puntoInicial = null;
+let imagenOriginal = null;
 
 /* =====================================
    CONFIGURAR CANVAS
@@ -35,7 +39,6 @@ let ultimoPunto = null;
 function configurarCanvas() {
 
     const rect = canvas.getBoundingClientRect();
-
     const dpr = window.devicePixelRatio || 1;
 
     canvas.width = rect.width * dpr;
@@ -66,12 +69,15 @@ function obtenerPosicion(evento) {
 }
 
 /* =====================================
-   SELECCIONAR HERRAMIENTA
+   SELECCIONAR LÁPIZ
 ===================================== */
 
 btnLapiz.addEventListener("click", function() {
 
     herramientaActual = "lapiz";
+    formaActual = "";
+
+    herramientaForma.value = "";
 
     btnLapiz.classList.add("activa");
     btnBorrador.classList.remove("activa");
@@ -80,9 +86,16 @@ btnLapiz.addEventListener("click", function() {
 
 });
 
+/* =====================================
+   SELECCIONAR BORRADOR
+===================================== */
+
 btnBorrador.addEventListener("click", function() {
 
     herramientaActual = "borrador";
+    formaActual = "";
+
+    herramientaForma.value = "";
 
     btnBorrador.classList.add("activa");
     btnLapiz.classList.remove("activa");
@@ -92,22 +105,44 @@ btnBorrador.addEventListener("click", function() {
 });
 
 /* =====================================
-   SELECCIONAR COLORES PREDETERMINADOS
+   SELECCIONAR FORMAS
 ===================================== */
 
-const botonesColores = document.querySelectorAll(".color-opcion");
+herramientaForma.addEventListener("change", function() {
+
+    formaActual = herramientaForma.value;
+
+    if (formaActual === "") {
+        herramientaActual = "lapiz";
+
+        btnLapiz.classList.add("activa");
+        btnBorrador.classList.remove("activa");
+
+        canvas.style.cursor = "crosshair";
+        return;
+    }
+
+    herramientaActual = "forma";
+
+    btnLapiz.classList.remove("activa");
+    btnBorrador.classList.remove("activa");
+
+    canvas.style.cursor = "crosshair";
+
+});
+
+/* =====================================
+   SELECCIONAR COLOR
+===================================== */
 
 botonesColores.forEach(boton => {
 
     boton.addEventListener("click", function() {
 
-        // Obtener el color seleccionado
         colorActual = boton.dataset.color;
 
-        // Actualizar el selector personalizado
         colorLapiz.value = colorActual;
 
-        // Actualizar la selección visual
         botonesColores.forEach(elemento => {
             elemento.classList.remove("seleccionado");
         });
@@ -119,14 +154,13 @@ botonesColores.forEach(boton => {
 });
 
 /* =====================================
-   SELECCIONAR COLOR PERSONALIZADO
+   COLOR PERSONALIZADO
 ===================================== */
 
 colorLapiz.addEventListener("input", function() {
 
     colorActual = colorLapiz.value;
 
-    // Quitar selección de colores predeterminados
     botonesColores.forEach(boton => {
         boton.classList.remove("seleccionado");
     });
@@ -146,6 +180,102 @@ grosorLapiz.addEventListener("input", function() {
 });
 
 /* =====================================
+   DIBUJAR FORMAS GEOMÉTRICAS
+===================================== */
+
+function dibujarForma(inicio, fin) {
+
+    const x = inicio.x;
+    const y = inicio.y;
+
+    const ancho = fin.x - x;
+    const alto = fin.y - y;
+
+    const centroX = x + ancho / 2;
+    const centroY = y + alto / 2;
+
+    ctx.beginPath();
+
+    ctx.strokeStyle = colorActual;
+    ctx.lineWidth = grosorActual;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    switch (formaActual) {
+
+        // RECTÁNGULO
+        case "rectangulo":
+
+            ctx.rect(x, y, ancho, alto);
+            break;
+
+        // CÍRCULO
+        case "circulo": {
+
+            const radio = Math.max(
+                Math.abs(ancho),
+                Math.abs(alto)
+            ) / 2;
+
+            ctx.arc(
+                centroX,
+                centroY,
+                radio,
+                0,
+                Math.PI * 2
+            );
+
+            break;
+        }
+
+        // LÍNEA RECTA
+        case "linea":
+
+            ctx.moveTo(x, y);
+            ctx.lineTo(fin.x, fin.y);
+            break;
+
+        // TRIÁNGULO
+        case "triangulo":
+
+            ctx.moveTo(centroX, y);
+            ctx.lineTo(x, fin.y);
+            ctx.lineTo(fin.x, fin.y);
+            ctx.closePath();
+
+            break;
+
+        // FLECHA
+        case "flecha": {
+
+            const angulo = Math.atan2(alto, ancho);
+            const longitudPunta = 15 + grosorActual;
+
+            ctx.moveTo(x, y);
+            ctx.lineTo(fin.x, fin.y);
+
+            ctx.moveTo(
+                fin.x - longitudPunta * Math.cos(angulo - Math.PI / 6),
+                fin.y - longitudPunta * Math.sin(angulo - Math.PI / 6)
+            );
+
+            ctx.lineTo(fin.x, fin.y);
+
+            ctx.lineTo(
+                fin.x - longitudPunta * Math.cos(angulo + Math.PI / 6),
+                fin.y - longitudPunta * Math.sin(angulo + Math.PI / 6)
+            );
+
+            break;
+        }
+
+    }
+
+    ctx.stroke();
+
+}
+
+/* =====================================
    INICIAR DIBUJO
 ===================================== */
 
@@ -156,15 +286,45 @@ canvas.addEventListener("pointerdown", function(evento) {
     canvas.setPointerCapture(evento.pointerId);
 
     ultimoPunto = obtenerPosicion(evento);
+    puntoInicial = obtenerPosicion(evento);
 
-    ctx.beginPath();
+    // Guardar el estado anterior para previsualizar formas
+    if (herramientaActual === "forma") {
 
-    ctx.moveTo(ultimoPunto.x, ultimoPunto.y);
+        imagenOriginal = ctx.getImageData(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+        return;
+    }
+
+    // Dibujar un punto si solamente se hace clic
+    if (herramientaActual === "lapiz") {
+
+        ctx.globalCompositeOperation = "source-over";
+        ctx.fillStyle = colorActual;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            ultimoPunto.x,
+            ultimoPunto.y,
+            grosorActual / 2,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+    }
 
 });
 
 /* =====================================
-   DIBUJAR
+   MOVIMIENTO DEL PUNTERO
 ===================================== */
 
 canvas.addEventListener("pointermove", function(evento) {
@@ -173,10 +333,22 @@ canvas.addEventListener("pointermove", function(evento) {
 
     const nuevoPunto = obtenerPosicion(evento);
 
+    // DIBUJAR FIGURAS
+    if (herramientaActual === "forma") {
+
+        if (!imagenOriginal) return;
+
+        ctx.putImageData(imagenOriginal, 0, 0);
+
+        dibujarForma(puntoInicial, nuevoPunto);
+
+        return;
+    }
+
+    // LÁPIZ Y BORRADOR
     ctx.beginPath();
 
     ctx.moveTo(ultimoPunto.x, ultimoPunto.y);
-
     ctx.lineTo(nuevoPunto.x, nuevoPunto.y);
 
     ctx.lineWidth = herramientaActual === "borrador"
@@ -186,7 +358,6 @@ canvas.addEventListener("pointermove", function(evento) {
     if (herramientaActual === "lapiz") {
 
         ctx.globalCompositeOperation = "source-over";
-
         ctx.strokeStyle = colorActual;
 
     } else {
@@ -205,18 +376,31 @@ canvas.addEventListener("pointermove", function(evento) {
    FINALIZAR DIBUJO
 ===================================== */
 
-function finalizarDibujo() {
+function finalizarDibujo(evento) {
+
+    if (!dibujando) return;
+
+    if (herramientaActual === "forma" && imagenOriginal) {
+
+        const posicionFinal = obtenerPosicion(evento);
+
+        ctx.putImageData(imagenOriginal, 0, 0);
+
+        dibujarForma(puntoInicial, posicionFinal);
+
+    }
 
     dibujando = false;
 
     ultimoPunto = null;
+    puntoInicial = null;
+    imagenOriginal = null;
 
     ctx.globalCompositeOperation = "source-over";
 
 }
 
 canvas.addEventListener("pointerup", finalizarDibujo);
-
 canvas.addEventListener("pointercancel", finalizarDibujo);
 
 /* =====================================
@@ -231,17 +415,11 @@ btnLimpiar.addEventListener("click", function() {
 
     if (!confirmar) return;
 
-    const rect = canvas.getBoundingClientRect();
-
-    const dpr = window.devicePixelRatio || 1;
-
     ctx.clearRect(
         0,
         0,
-        rect.width,
-        rect.height
+        canvas.width,
+        canvas.height
     );
-
-    ctx.globalCompositeOperation = "source-over";
 
 });
