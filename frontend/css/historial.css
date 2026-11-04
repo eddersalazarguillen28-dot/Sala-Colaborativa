@@ -64,7 +64,7 @@ html,body{
 
 .modulo3-sidebar{
     width: 320px;
-    background-color: #ffffff;
+    background-color: #001E3B;
     border-left: 1px solid #dee2e6;
     display: flex;
     flex-direction: column;
@@ -84,7 +84,7 @@ html,body{
 
 .sidebar-header h5{
     font-size: 1rem;
-    color: #212529;
+    color: #e4e8eb;
     font-weight: 700;
 }
 

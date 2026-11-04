@@ -144,7 +144,35 @@
             <div class="contenedor-canvas">
                 <canvas id="pizarraCanvas"></canvas>
             </div>
+        </section>
 
+        <section class="panel-videollamada">
+            <header class="encabezado-videollamada">
+                <h2>Audio y video</h2>
+                <p>Comunícate con los participantes</p>
+            </header>
+
+            <div class="contenedor-videos">
+                <div class="video-participante">
+                    <video id="videoLocal" autoplay muted playsinline></video>
+                    <span>Tu cámara</span>
+                </div>
+
+            </div>
+
+            <div class="controles-videollamada">
+                <button id="btnMicrofono" type="button">
+                    Activar micrófono
+                </button>
+
+                <button id="btnCamara" type="button">
+                    Activar cámara
+                </button>
+
+                <button id="btnSalirLlamada" type="button">
+                    Salir de la llamada
+                </button>
+            </div>
         </section>
 
         <!-- CHAT COLABORATIVO -->
@@ -202,6 +230,9 @@
     <!-- JAVASCRIPT -->
     <script src="../javascripts/pizarra.js" defer></script>
     <script src="../javascripts/sala.js" defer></script>
+    <script src="https://cdn.socket.io/4.8.4/socket.io.min.js" defer></script>
+    <script src="../javascripts/chat.js" defer></script>
+    <script src="../javascripts/videollamada.js"></script>
 
 </body>
 </html>
