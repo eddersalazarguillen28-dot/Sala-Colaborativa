@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../css/historial.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <title>Historial</title>
 </head>
 <body>
@@ -43,7 +44,7 @@
             <div class="panel-card">
                 <span class="panel-titulo">Exportar pantalla</span>
                 <div class="btn-group-costum">
-                    <button id="btn-export-pdf" class="btn btn-outline">
+                    <button id="btn-export-png" class="btn btn-outline">
                         Imagen PNG
                     </button>
 
@@ -64,8 +65,8 @@
 
                 <ul id="user-list" class="user-list">
                     <li class="user-item">
-                        <span><span class="user-indicator"></span>Estefanía (Tú)</span>
-                        <span class="role-badge">Anfitrión</span>
+                        <!--<span><span class="user-indicator"></span>Estefanía (Tú)</span>
+                        <span class="role-badge">Anfitrión</span>-->
                     </li>
                 </ul>
 
@@ -75,7 +76,7 @@
             <div class="panel-card historial-card">
                 <span class="panel-titulo">Historial de actividades</span>
                 <div id="actividad-historial" class="historial-container">
-                    <div class="historial-item">
+                    <!--<div class="historial-item">
                         <span class="tiempo-historial">10:00 am</span>
                         <p style="margin:0;"><strong>Sistema:</strong> Interfaz inicializada</p>
 
@@ -84,7 +85,7 @@
                         <span class="tiempo-historial">10:01 am</span>
                         <p style="margin:0;"><strong>Estefania:</strong> Módulo 3 cargado</p>
 
-                    </div>
+                    </div>-->
 
                 </div>
 
@@ -100,7 +101,7 @@
     <!--Contenedor de notificaciones dinamicas-->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
 
     <script src="../javascripts/historial.js"></script>
 </body>
