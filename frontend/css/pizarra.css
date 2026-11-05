@@ -447,3 +447,319 @@ input[type="range"] {
     color: #333;
     padding: 10px;
 }
+/* =====================================
+   SELECTOR DE PINCELES
+===================================== */
+
+.select-formas {
+    min-width: 145px;
+    padding: 10px 12px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+
+    background: #f3f4f6;
+    color: #333;
+
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+}
+
+.select-formas:hover {
+    background: #e5e7eb;
+}
+
+.select-formas:focus {
+    border-color: #2563eb;
+}
+
+.select-formas option {
+    padding: 10px;
+    background: white;
+    color: #333;
+}
+/* =====================================
+   NUEVAS HERRAMIENTAS
+===================================== */
+
+.grupo-herramientas {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.select-herramienta {
+    min-width: 135px;
+    max-width: 180px;
+    padding: 9px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #f3f4f6;
+    cursor: pointer;
+}
+
+.herramienta {
+    padding: 9px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #f3f4f6;
+    color: #333;
+    cursor: pointer;
+}
+
+.herramienta:hover {
+    background: #e5e7eb;
+}
+
+.herramienta.activa {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: white;
+}
+
+.btn-limpiar {
+    padding: 9px 12px;
+    border: none;
+    border-radius: 6px;
+    background: #dc2626;
+    color: white;
+    cursor: pointer;
+}
+
+.btn-limpiar:hover {
+    background: #b91c1c;
+}
+
+/* =====================================
+   ZOOM
+===================================== */
+
+.contenedor-canvas {
+    position: relative;
+    width: 100%;
+    height: 550px;
+    overflow: auto;
+    background: #e5e7eb;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+#pizarraCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: white;
+    touch-action: none;
+    cursor: crosshair;
+    transform-origin: top left;
+}
+
+/* =====================================
+   SELECCIÓN
+===================================== */
+
+#pizarraCanvas.seleccion-activa {
+    cursor: crosshair;
+}
+
+#pizarraCanvas.texto-activo {
+    cursor: text;
+}
+
+@media (max-width: 768px) {
+    .barra-herramientas {
+        align-items: flex-start;
+    }
+
+    .grupo-herramientas {
+        width: 100%;
+    }
+}
+/* =====================================
+   BARRA DE HERRAMIENTAS CON ICONOS
+===================================== */
+
+.barra-herramientas {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+/* GRUPOS */
+
+.barra-herramientas .grupo-herramientas {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-right: 1px solid #e5e7eb;
+    flex-wrap: nowrap;
+}
+
+/* BOTONES CON ICONOS */
+
+.icono-herramienta {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    color: #374151;
+    cursor: pointer;
+    font-size: 19px;
+    transition: 0.2s;
+}
+
+.icono-herramienta svg,
+.grupo-grosor svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.icono-herramienta:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+.icono-herramienta.activa {
+    background: #dbeafe;
+    color: #2563eb;
+    border-color: #93c5fd;
+}
+
+.icono-herramienta:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* BOTÓN DE LIMPIEZA */
+
+.icono-peligro:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* SELECTORES DESPLEGABLES */
+
+.select-icono {
+    height: 36px;
+    max-width: 125px;
+    padding: 0 7px;
+    border: 1px solid #e5e7eb;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #374151;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.select-icono:hover {
+    background: #f3f4f6;
+}
+
+/* COLORES */
+
+.grupo-colores {
+    gap: 7px !important;
+}
+
+.grupo-colores .color-opcion {
+    width: 23px;
+    height: 23px;
+    min-width: 23px;
+    border-radius: 50%;
+    border: 2px solid #d1d5db;
+    cursor: pointer;
+}
+
+.grupo-colores .color-opcion.seleccionado {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+/* COLOR PERSONALIZADO */
+
+.selector-personalizado {
+    position: relative;
+    width: 26px;
+    height: 26px;
+}
+
+.selector-personalizado label {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #d1d5db;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.selector-personalizado input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* GROSOR */
+
+.grupo-grosor {
+    gap: 7px !important;
+}
+
+.grupo-grosor input {
+    width: 75px;
+    cursor: pointer;
+}
+
+.grupo-grosor span {
+    min-width: 32px;
+    font-size: 12px;
+    color: #4b5563;
+}
+
+/* ZOOM */
+
+#valorZoom {
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 768px) {
+
+    .barra-herramientas {
+        gap: 5px;
+        padding: 8px;
+    }
+
+    .barra-herramientas .grupo-herramientas {
+        border-right: none;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 5px;
+    }
+
+}
