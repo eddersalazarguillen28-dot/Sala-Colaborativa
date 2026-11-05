@@ -17,6 +17,7 @@ function registrarActividad(usuario,accion){
     item.innerHTML = `
         <span class = "tiempo-historial">${horaFormateada}</span>
         <p style = "margin:0;"><strong>${usuario}:</strong> ${accion}</p>
+
     
     `;
     //Insertar al inicio(mas reciente arriba
@@ -143,3 +144,38 @@ function actualizarListaUsuarios(usuarios){
 
 
 }
+
+//SERVIDOR WEBSOCKETS 
+
+//Conectar al servidor
+const socket = io();
+
+//Integracion con websocket
+
+//Cuando el ususario entra a la sala
+socket.on('user-joined', (data) => {
+    mostrarNotificacion('${data.nombre} se unió a la sala','join');
+    registrarActividad('Sistema','${data.nombre} entró a la sesión');
+
+    if(data.usuarios){
+        actualizarListaUsuarios(data.usuarios);
+    }
+});
+
+//Cuando un usuario sale de la sala 
+socket.on('user-left',(data) => {
+    mostrarNotificacion('${data.nombre} abandonó la sala','leave');
+    registrarActividad('Sistema','${data.nombre} saluó de la sesión');
+
+    if(data.usuarios){
+        actualizarListaUsuarios(data.usuarios);
+    }
+});
+
+//Evento general para registrar trazos en el historial
+socket.on('draw-action',(data) => {
+    registrarActividad(data.usuario,`dibujó un trazo (${data.tipo})`);
+});
+
+
+
