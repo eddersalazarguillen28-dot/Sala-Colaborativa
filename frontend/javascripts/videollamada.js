@@ -1,13 +1,32 @@
+
+const socketVideo = window.socketSala;
+
+// Elementos HTML
 const videoLocal = document.getElementById("videoLocal");
 const btnMicrofono = document.getElementById("btnMicrofono");
 const btnCamara = document.getElementById("btnCamara");
 const btnSalirLlamada = document.getElementById("btnSalirLlamada");
 
-let flujoLocal = null;
+const estadoMicrofono = document.getElementById("estadoMicrofono");
+const nivelAudio = document.getElementById("nivelAudio");
+const selectorMicrofono = document.getElementById("selectorMicrofono");
+
+// Flujos independientes
+let flujoAudio = null;
+let flujoCamara = null;
+
 let pistaAudio = null;
 let pistaVideo = null;
 
-async function iniciarDispositivo() {
+// Analizador de sonido
+let contextoAudio = null;
+let analizador = null;
+let fuenteAudio = null;
+let datosAudio = null;
+let animacionAudio = null;
+
+// Buscar micrófonos disponibles
+async function comprobarMicrofonos() {
     try {
         // Solicitamos audio y video (cámbialo a video: false si estrictamente solo quieres audio)
         flujoLocal = await navigator.mediaDevices.getUserMedia({
@@ -19,8 +38,7 @@ async function iniciarDispositivo() {
             videoLocal.srcObject = flujoLocal;
         }
 
-        pistaAudio = flujoLocal.getAudioTracks()[0];
-        pistaVideo = flujoLocal.getVideoTracks()[0];
+        console.log("Micrófonos encontrados:", microfonos);
 
         if (btnMicrofono) btnMicrofono.textContent = "Desactivar micrófono";
         if (btnCamara) btnCamara.textContent = "Desactivar cámara";
@@ -76,4 +94,86 @@ if (btnSalirLlamada) {
     });
 }
 
-iniciarDispositivo();
+// Botón de cámara
+btnCamara.addEventListener("click", async () => {
+
+    if (flujoCamara) {
+        flujoCamara.getTracks().forEach(pista => pista.stop());
+
+        flujoCamara = null;
+        pistaVideo = null;
+
+        videoLocal.srcObject = null;
+
+        btnCamara.textContent = "Activar cámara";
+
+        console.log("Cámara desactivada");
+        return;
+    }
+
+    try {
+        flujoCamara = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false
+        });
+
+        pistaVideo = flujoCamara.getVideoTracks()[0];
+
+        videoLocal.srcObject = flujoCamara;
+
+        btnCamara.textContent = "Desactivar cámara";
+
+        console.log("Cámara activada");
+
+    } catch (error) {
+        console.error("Error al activar la cámara:", error);
+        alert("No se pudo acceder a la cámara. Revisá los permisos y el dispositivo.");
+    }
+});
+
+// Botón salir de la llamada
+btnSalirLlamada.addEventListener("click", () => {
+
+    // Detener micrófono
+    if (flujoAudio) {
+        flujoAudio.getTracks().forEach(pista => pista.stop());
+        flujoAudio = null;
+        pistaAudio = null;
+    }
+
+    // Detener cámara
+    if (flujoCamara) {
+        flujoCamara.getTracks().forEach(pista => pista.stop());
+        flujoCamara = null;
+        pistaVideo = null;
+    }
+
+    // Limpiar video
+    videoLocal.srcObject = null;
+
+    // Detener analizador
+    detenerIndicadorAudio();
+
+    // Restablecer botones y estado
+    btnMicrofono.textContent = "Activar micrófono";
+    btnCamara.textContent = "Activar cámara";
+
+    estadoMicrofono.textContent = "Micrófono apagado";
+    estadoMicrofono.style.color = "#f87171";
+
+    console.log("Saliste de la llamada");
+});
+
+// Actualizar dispositivos al conectar o desconectar uno
+comprobarMicrofonos();
+
+navigator.mediaDevices.addEventListener(
+    "devicechange",
+    comprobarMicrofonos
+);
+
+console.log(
+    socketVideo
+        ? "Videollamada preparada para utilizar Socket.IO"
+        : "No se encontró la conexión compartida de Socket.IO"
+);

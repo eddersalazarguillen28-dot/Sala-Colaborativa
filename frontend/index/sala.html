@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 
@@ -14,330 +13,316 @@
 
 <body>
 
-<main class="contenedor-sala">
+    <main class="contenedor-sala">
 
-    <!-- PIZARRA -->
-    <section class="contenedor-pizarra">
+        <!-- PIZARRA -->
+        <section class="contenedor-pizarra">
 
-        <header class="encabezado-pizarra">
-            <div>
-                <h1>Pizarra colaborativa</h1>
-                <p id="nombreSalaActual">Espacio de dibujo compartido</p>
-            </div>
+            <header class="encabezado-pizarra">
+                <div>
+                    <h1>Pizarra colaborativa</h1>
+                    <p id="nombreSalaActual">Espacio de dibujo compartido</p>
+                </div>
 
-            <div class="informacion-usuario">
-                <span>Participante:</span>
-                <strong id="usuarioActual">Usuario</strong>
-            </div>
-        </header>
+                <div class="informacion-usuario">
+                    <span>Participante:</span>
+                    <strong id="usuarioActual">Usuario</strong>
+                </div>
+            </header>
 
-        <!-- BARRA DE HERRAMIENTAS -->
-        <div class="barra-herramientas">
+            <!-- BARRA DE HERRAMIENTAS -->
+            <div class="barra-herramientas">
 
-            <!-- HERRAMIENTAS PRINCIPALES -->
-            <div class="grupo-herramientas">
+                <!-- HERRAMIENTAS PRINCIPALES -->
+                <div class="grupo-herramientas">
 
-                <button id="btnLapiz" class="icono-herramienta activa"
-                    type="button" title="Lápiz" aria-label="Lápiz">
+                    <button id="btnLapiz" class="icono-herramienta activa" type="button" title="Lápiz"
+                        aria-label="Lápiz">
+
+                        <svg viewBox="0 0 24 24">
+                            <path d="m15 5 4 4M4 20l4-.8L19 8a2.8 2.8 0 0 0-4-4L4 15z" />
+                        </svg>
+                    </button>
+
+                    <button id="btnBorrador" class="icono-herramienta" type="button" title="Borrador"
+                        aria-label="Borrador">
+
+                        <svg viewBox="0 0 24 24">
+                            <path d="m7 21 12-12a2.8 2.8 0 0 0-4-4L3 17l4 4z" />
+                            <path d="m14 8 4 4M7 21h14" />
+                        </svg>
+                    </button>
+
+                    <button id="btnTexto" class="icono-herramienta" type="button" title="Insertar texto"
+                        aria-label="Texto">
+
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 7V4h16v3M12 4v16M8 20h8" />
+                        </svg>
+                    </button>
+
+                    <button id="btnRellenar" class="icono-herramienta" type="button" title="Bote de pintura"
+                        aria-label="Rellenar">
+
+                        <svg viewBox="0 0 24 24">
+                            <path d="m12 3 8 8-9 9H4l-2-2 10-10" />
+                            <path d="m7 8 9 9M19 15c2 2 3 3 3 5a2 2 0 0 1-4 0c0-1 0-3 1-5z" />
+                        </svg>
+                    </button>
+
+                </div>
+
+                <!-- PINCELES -->
+                <div class="grupo-herramientas">
+
+                    <select id="tipoPincel" class="select-icono" title="Tipos de pincel">
+
+                        <option value="lapiz">Lápiz clásico</option>
+                        <option value="pincel">Pincel clásico</option>
+                        <option value="aerografo">Aerógrafo</option>
+                        <option value="acuarela">Acuarela</option>
+                        <option value="oleo">Óleo</option>
+                        <option value="marcador">Marcador</option>
+                        <option value="crayon">Crayón</option>
+
+                    </select>
+
+                </div>
+
+                <!-- FORMAS -->
+                <div class="grupo-herramientas">
+
+                    <select id="herramientaForma" class="select-icono" title="Formas geométricas">
+
+                        <option value="">Formas</option>
+                        <option value="rectangulo">Rectángulo</option>
+                        <option value="circulo">Círculo</option>
+                        <option value="linea">Línea recta</option>
+                        <option value="triangulo">Triángulo</option>
+                        <option value="flecha">Flecha</option>
+
+                    </select>
+
+                </div>
+
+                <!-- SELECCIÓN -->
+                <div class="grupo-herramientas">
+
+                    <select id="tipoSeleccion" class="select-icono" title="Herramienta de selección">
+
+                        <option value="">Selección</option>
+                        <option value="rectangular">Selección rectangular</option>
+                        <option value="libre">Selección libre</option>
+
+                    </select>
+
+                    <button id="btnRecortar" class="icono-herramienta" type="button" title="Recortar"
+                        aria-label="Recortar">
+
+                        <svg viewBox="0 0 24 24">
+                            <path d="M6 3v12a3 3 0 0 0 3 3h12M18 21V9a3 3 0 0 0-3-3H3" />
+                            <path d="m8 8 8 8" />
+                        </svg>
+                    </button>
+
+                </div>
+
+                <!-- CAMBIAR TAMAÑO Y GIRAR -->
+                <div class="grupo-herramientas">
+
+                    <button id="btnRedimensionar" class="icono-herramienta" type="button" title="Cambiar tamaño"
+                        aria-label="Cambiar tamaño">
+
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 9V4h5M20 15v5h-5M4 4l7 7M20 20l-7-7" />
+                        </svg>
+                    </button>
+
+                    <select id="tipoGiro" class="select-icono" title="Girar contenido">
+
+                        <option value="">Girar</option>
+                        <option value="90">90°</option>
+                        <option value="180">180°</option>
+                        <option value="270">270°</option>
+
+                    </select>
+
+                </div>
+
+                <!-- COLORES -->
+                <div class="grupo-herramientas grupo-colores">
+
+                    <button class="color-opcion seleccionado" data-color="#000000" style="background:#000000"
+                        title="Negro" aria-label="Negro"></button>
+
+                    <button class="color-opcion" data-color="#ef4444" style="background:#ef4444" title="Rojo"
+                        aria-label="Rojo"></button>
+
+                    <button class="color-opcion" data-color="#3b82f6" style="background:#3b82f6" title="Azul"
+                        aria-label="Azul"></button>
+
+                    <button class="color-opcion" data-color="#22c55e" style="background:#22c55e" title="Verde"
+                        aria-label="Verde"></button>
+
+                    <button class="color-opcion" data-color="#eab308" style="background:#eab308" title="Amarillo"
+                        aria-label="Amarillo"></button>
+
+                    <div class="selector-personalizado">
+                        <label for="colorLapiz" title="Elegir color personalizado">+</label>
+
+                        <input type="color" id="colorLapiz" value="#000000">
+                    </div>
+
+                </div>
+
+                <!-- GROSOR -->
+                <div class="grupo-herramientas grupo-grosor">
+
                     <svg viewBox="0 0 24 24">
-                        <path d="m15 5 4 4M4 20l4-.8L19 8a2.8 2.8 0 0 0-4-4L4 15z"/>
+                        <path d="M4 12h16" />
+                        <path d="M4 8v8M20 8v8" />
                     </svg>
-                </button>
 
-                <button id="btnBorrador" class="icono-herramienta"
-                    type="button" title="Borrador" aria-label="Borrador">
-                    <svg viewBox="0 0 24 24">
-                        <path d="m7 21 12-12a2.8 2.8 0 0 0-4-4L3 17l4 4z"/>
-                        <path d="m14 8 4 4M7 21h14"/>
-                    </svg>
-                </button>
+                    <input type="range" id="grosorLapiz" min="1" max="30" value="4">
 
-                <button id="btnTexto" class="icono-herramienta"
-                    type="button" title="Insertar texto" aria-label="Texto">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 7V4h16v3M12 4v16M8 20h8"/>
-                    </svg>
-                </button>
+                    <span id="valorGrosor">4 px</span>
 
-                <button id="btnRellenar" class="icono-herramienta"
-                    type="button" title="Bote de pintura" aria-label="Rellenar">
-                    <svg viewBox="0 0 24 24">
-                        <path d="m12 3 8 8-9 9H4l-2-2 10-10"/>
-                        <path d="m7 8 9 9M19 15c2 2 3 3 3 5a2 2 0 0 1-4 0c0-1 0-3 1-5z"/>
-                    </svg>
-                </button>
+                </div>
 
-            </div>
+                <!-- HISTORIAL -->
+                <div class="grupo-herramientas">
 
-            <!-- PINCELES -->
-            <div class="grupo-herramientas">
+                    <button id="btnDeshacer" class="icono-herramienta" type="button" title="Deshacer"
+                        aria-label="Deshacer">
 
-                <select id="tipoPincel" class="select-icono"
-                    title="Tipos de pincel">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M9 14 4 9l5-5" />
+                            <path d="M4 9h10a6 6 0 0 1 0 12h-2" />
+                        </svg>
+                    </button>
 
-                    <option value="lapiz">Lápiz clásico</option>
-                    <option value="pincel">Pincel clásico</option>
-                    <option value="aerografo">Aerógrafo</option>
-                    <option value="acuarela">Acuarela</option>
-                    <option value="oleo">Óleo</option>
-                    <option value="marcador">Marcador</option>
-                    <option value="crayon">Crayón</option>
+                    <button id="btnRehacer" class="icono-herramienta" type="button" title="Rehacer"
+                        aria-label="Rehacer">
 
-                </select>
+                        <svg viewBox="0 0 24 24">
+                            <path d="m15 14 5-5-5-5" />
+                            <path d="M20 9H10a6 6 0 0 0 0 12h2" />
+                        </svg>
+                    </button>
 
-            </div>
+                </div>
 
-            <!-- FORMAS -->
-            <div class="grupo-herramientas">
+                <!-- ZOOM -->
+                <div class="grupo-herramientas">
 
-                <select id="herramientaForma" class="select-icono"
-                    title="Formas geométricas">
+                    <button id="btnZoomMenos" class="icono-herramienta" type="button" title="Alejar">
+                        −
+                    </button>
 
-                    <option value="">Formas</option>
-                    <option value="rectangulo">Rectángulo</option>
-                    <option value="circulo">Círculo</option>
-                    <option value="linea">Línea recta</option>
-                    <option value="triangulo">Triángulo</option>
-                    <option value="flecha">Flecha</option>
+                    <span id="valorZoom">100%</span>
 
-                </select>
+                    <button id="btnZoomMas" class="icono-herramienta" type="button" title="Acercar">
+                        +
+                    </button>
 
-            </div>
+                    <button id="btnZoomReset" class="icono-herramienta" type="button" title="Restablecer zoom">
+                        1:1
+                    </button>
 
-            <!-- SELECCIÓN -->
-            <div class="grupo-herramientas">
+                </div>
 
-                <select id="tipoSeleccion" class="select-icono"
-                    title="Herramienta de selección">
+                <!-- LIMPIAR -->
+                <div class="grupo-herramientas">
 
-                    <option value="">Selección</option>
-                    <option value="rectangular">Selección rectangular</option>
-                    <option value="libre">Selección libre</option>
+                    <button id="btnLimpiar" class="icono-herramienta icono-peligro" type="button"
+                        title="Limpiar toda la pizarra" aria-label="Limpiar pizarra">
 
-                </select>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6" />
+                            <path d="M10 11v5M14 11v5" />
+                        </svg>
 
-                <button id="btnRecortar" class="icono-herramienta"
-                    type="button" title="Recortar" aria-label="Recortar">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M6 3v12a3 3 0 0 0 3 3h12M18 21V9a3 3 0 0 0-3-3H3"/>
-                        <path d="m8 8 8 8"/>
-                    </svg>
-                </button>
+                    </button>
 
-            </div>
-
-            <!-- CAMBIAR TAMAÑO Y GIRAR -->
-            <div class="grupo-herramientas">
-
-                <button id="btnRedimensionar" class="icono-herramienta"
-                    type="button" title="Cambiar tamaño" aria-label="Cambiar tamaño">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M4 9V4h5M20 15v5h-5M4 4l7 7M20 20l-7-7"/>
-                    </svg>
-                </button>
-
-                <select id="tipoGiro" class="select-icono" title="Girar contenido">
-                    <option value="">Girar</option>
-                    <option value="90">90°</option>
-                    <option value="180">180°</option>
-                    <option value="270">270°</option>
-                </select>
-
-            </div>
-
-            <!-- COLORES -->
-            <div class="grupo-herramientas grupo-colores">
-
-                <button class="color-opcion seleccionado"
-                    data-color="#000000"
-                    style="background:#000000"
-                    title="Negro" aria-label="Negro"></button>
-
-                <button class="color-opcion"
-                    data-color="#ef4444"
-                    style="background:#ef4444"
-                    title="Rojo" aria-label="Rojo"></button>
-
-                <button class="color-opcion"
-                    data-color="#3b82f6"
-                    style="background:#3b82f6"
-                    title="Azul" aria-label="Azul"></button>
-
-                <button class="color-opcion"
-                    data-color="#22c55e"
-                    style="background:#22c55e"
-                    title="Verde" aria-label="Verde"></button>
-
-                <button class="color-opcion"
-                    data-color="#eab308"
-                    style="background:#eab308"
-                    title="Amarillo" aria-label="Amarillo"></button>
-
-                <div class="selector-personalizado">
-                    <label for="colorLapiz" title="Elegir color personalizado">+</label>
-                    <input type="color" id="colorLapiz" value="#000000">
                 </div>
 
             </div>
 
-            <!-- GROSOR -->
-            <div class="grupo-herramientas grupo-grosor">
-
-                <svg viewBox="0 0 24 24">
-                    <path d="M4 12h16"/>
-                    <path d="M4 8v8M20 8v8"/>
-                </svg>
-
-                <input type="range" id="grosorLapiz"
-                    min="1" max="30" value="4">
-
-                <span id="valorGrosor">4 px</span>
-
+            <!-- CANVAS -->
+            <div class="contenedor-canvas">
+                <canvas id="pizarraCanvas"></canvas>
             </div>
 
-            <!-- HISTORIAL -->
-            <div class="grupo-herramientas">
+        </section>
+        
+        <div class="panel-lateral">
+            <!-- VIDEOLLAMADA -->
+            <section class="panel-videollamada">
 
-                <button id="btnDeshacer" class="icono-herramienta"
-                    type="button" title="Deshacer" aria-label="Deshacer">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M9 14 4 9l5-5"/>
-                        <path d="M4 9h10a6 6 0 0 1 0 12h-2"/>
-                    </svg>
-                </button>
+                <header class="encabezado-videollamada">
+                    <h2>Audio y video</h2>
+                    <p>Comunícate con los participantes</p>
+                </header>
 
-                <button id="btnRehacer" class="icono-herramienta"
-                    type="button" title="Rehacer" aria-label="Rehacer">
-                    <svg viewBox="0 0 24 24">
-                        <path d="m15 14 5-5-5-5"/>
-                        <path d="M20 9H10a6 6 0 0 0 0 12h2"/>
-                    </svg>
-                </button>
+                <!-- SELECTOR E INDICADOR DE MICRÓFONO -->
+                <div class="indicador-microfono">
 
-            </div>
+                    <label for="selectorMicrofono">
+                        Seleccionar micrófono:
+                    </label>
 
-            <!-- ZOOM -->
-            <div class="grupo-herramientas">
+                    <select id="selectorMicrofono">
+                        <option value="">Buscando micrófonos...</option>
+                    </select>
 
-                <button id="btnZoomMenos" class="icono-herramienta"
-                    type="button" title="Alejar">
-                    −
-                </button>
+                    <span id="estadoMicrofono">Micrófono apagado</span>
 
-                <span id="valorZoom">100%</span>
+                    <div class="barra-audio">
+                        <div id="nivelAudio"></div>
+                    </div>
 
-                <button id="btnZoomMas" class="icono-herramienta"
-                    type="button" title="Acercar">
-                    +
-                </button>
-
-                <button id="btnZoomReset" class="icono-herramienta"
-                    type="button" title="Restablecer zoom">
-                    1:1
-                </button>
-
-            </div>
-
-            <!-- LIMPIAR -->
-            <div class="grupo-herramientas">
-
-                <button id="btnLimpiar" class="icono-herramienta icono-peligro"
-                    type="button" title="Limpiar toda la pizarra"
-                    aria-label="Limpiar pizarra">
-
-                    <svg viewBox="0 0 24 24">
-                        <path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6"/>
-                        <path d="M10 11v5M14 11v5"/>
-                    </svg>
-
-                </button>
-
-            </div>
-
-        </div>
-
-        <!-- CANVAS -->
-        <div class="contenedor-canvas">
-            <canvas id="pizarraCanvas"></canvas>
-        </div>
-
-    </section>
-
-    <!-- VIDEOLLAMADA -->
-    <section class="panel-videollamada">
-
-        <header class="encabezado-videollamada">
-            <h2>Audio y video</h2>
-            <p>Comunícate con los participantes</p>
-        </header>
-
-        <div class="contenedor-videos">
-            <div class="video-participante">
-                <video id="videoLocal" autoplay muted playsinline></video>
-                <span>Tu cámara</span>
-            </div>
-        </div>
-
-        <div class="controles-videollamada">
-            <button id="btnMicrofono" type="button">
-                Activar micrófono
-            </button>
-
-            <button id="btnCamara" type="button">
-                Activar cámara
-            </button>
-
-            <button id="btnSalirLlamada" type="button">
-                Salir de la llamada
-            </button>
-        </div>
-
-    </section>
-
-    <!-- CHAT -->
-    <aside class="panel-chat">
-
-        <header class="encabezado-chat">
-            <h2>Chat de la sala</h2>
-            <p>Comunícate con el equipo</p>
-        </header>
-
-        <section class="contenido-chat">
-
-            <div class="participantes">
-                <h3>Participantes</h3>
-
-                <div
-                    class="lista-participantes"
-                    id="listaParticipantes">
                 </div>
-            </div>
 
-            <section class="conversacion">
+                <!-- VIDEOS -->
+                <div class="contenedor-videos">
 
-                <div class="mensajes" id="mensajes"></div>
+                    <div class="video-participante">
+                        <video id="videoLocal" autoplay muted playsinline>
+                        </video>
 
-                <form
-                    class="formulario-mensaje"
-                    id="formularioMensaje">
+                        <span>Tu cámara</span>
+                    </div>
 
-                    <input
-                        type="text"
-                        id="mensaje"
-                        placeholder="Escribe un mensaje..."
-                        autocomplete="off">
+                </div>
 
-                    <button type="submit">Enviar</button>
+                <!-- CONTROLES -->
+                <div class="controles-videollamada">
 
-                </form>
+                    <button id="btnMicrofono" type="button">
+                        Activar micrófono
+                    </button>
+
+                    <button id="btnCamara" type="button">
+                        Activar cámara
+                    </button>
+
+                    <button id="btnSalirLlamada" type="button">
+                        Salir de la llamada
+                    </button>
+
+                </div>
 
             </section>
 
-        </section>
+            <!-- CHAT -->
+            <aside class="panel-chat">
 
-    </aside>
+                <header class="encabezado-chat">
+                    <h2>Chat de la sala</h2>
+                    <p>Comunícate con el equipo</p>
+                </header>
 
-</main>
+                <section class="contenido-chat">
 
 <!-- SCRIPTS -->
 
@@ -351,4 +336,5 @@
 <script src="../javascripts/videollamada.js" defer></script>
 
 </body>
+
 </html>
