@@ -24,6 +24,10 @@ const io = new Server(server, {
   }
 });
 
+//SALA USUARIOS///////
+const salasUsuarios = {};
+////////////////////////////////
+
 // Configurar la gestión de salas
 configurarSalas(io);
 
@@ -63,6 +67,19 @@ io.on("connection", (socket) => {
     if (datos) {
       const nuevaSala = datos.nombreSala || datos.sala;
       const nuevoUsuario = datos.nombreUsuario || usuarioActual;
+
+      ///////SALA USUARIO//////////////////
+      socket.join(salaActual);
+      if (!salasUsuarios[salaActual])  salasUsuarios[salaActual] = [];
+      if (!salasUsuarios[salaActual].includes(usuarioActual)) {
+        salasUsuarios[salaActual].push(usuarioActual);
+      }
+      io.to(salaActual).emit("user-joined",{
+        nombre:usuarioActual,
+        usuarios:salasUsuarios[salaActual]
+      });
+
+      console.log(`[SALA] Usuario "${usuarioActual}" (${socket.id}) se unió a: "${salaActual}"`);
 
       // Si el cliente ya está registrado en esta sala con este nombre, evitamos duplicar el log
       if (salaActual === nuevaSala && usuarioActual === nuevoUsuario) {
@@ -126,6 +143,8 @@ io.on("connection", (socket) => {
     console.log(`🔴 [DESCONEXIÓN] Cliente desconectado ID: ${socket.id} (${usuarioActual}). Razón: ${reason}`);
   });
 });
+
+
 
 // Iniciar el servidor
 const PORT = 3000;
