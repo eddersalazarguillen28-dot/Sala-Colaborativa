@@ -8,19 +8,22 @@ function configurarPizarra(io) {
 
       const { sala, trazo } = datos;
 
-      // Comprobar que los datos sean válidos
+      // Validar los datos recibidos
       if (
         typeof sala !== "string" ||
         !sala.trim() ||
         !trazo ||
-        typeof trazo !== "object"
+        typeof trazo !== "object" ||
+        Array.isArray(trazo)
       ) {
         socket.emit("error-pizarra", "Datos de dibujo inválidos");
         return;
       }
 
-      // Comprobar que el usuario pertenezca a esa sala
-      if (!socket.rooms.has(sala)) {
+      const nombreSala = sala.trim();
+
+      // Comprobar que el usuario pertenezca a la sala
+      if (!socket.rooms.has(nombreSala)) {
         socket.emit("error-pizarra", "No perteneces a esta sala");
         return;
       }
@@ -42,6 +45,7 @@ function configurarPizarra(io) {
       if (
         typeof trazo.color !== "string" ||
         trazo.color.length > 30 ||
+        !/^#[0-9a-fA-F]{6}$/.test(trazo.color) ||
         !Number.isFinite(trazo.grosor) ||
         trazo.grosor <= 0 ||
         trazo.grosor > 50
@@ -50,35 +54,48 @@ function configurarPizarra(io) {
         return;
       }
 
-      // Enviar el trazo a los demás usuarios de la misma sala
-      socket.to(sala).emit("nuevo-trazo", {
-        trazo: {
-          x0: trazo.x0,
-          y0: trazo.y0,
-          x1: trazo.x1,
-          y1: trazo.y1,
-          color: trazo.color,
-          grosor: trazo.grosor
-        }
+      // Preparar el trazo validado
+      const nuevoTrazo = {
+        x0: trazo.x0,
+        y0: trazo.y0,
+        x1: trazo.x1,
+        y1: trazo.y1,
+        color: trazo.color,
+        grosor: trazo.grosor
+      };
+
+      // Enviar el trazo a los demás participantes
+      socket.to(nombreSala).emit("nuevo-trazo", {
+        trazo: nuevoTrazo
       });
 
-      console.log(`Nuevo trazo enviado a la sala ${sala}`);
+      console.log(`Nuevo trazo enviado a la sala ${nombreSala}`);
     });
 
-    // Limpiar la pizarra de todos los participantes de una sala
+
+    // Limpiar la pizarra de todos los participantes
     socket.on("limpiar-pizarra", (sala) => {
 
       if (
         typeof sala !== "string" ||
-        !socket.rooms.has(sala)
+        !sala.trim()
       ) {
+        socket.emit("error-pizarra", "Nombre de sala inválido");
+        return;
+      }
+
+      const nombreSala = sala.trim();
+
+      // Comprobar que el usuario pertenezca a la sala
+      if (!socket.rooms.has(nombreSala)) {
         socket.emit("error-pizarra", "No perteneces a esta sala");
         return;
       }
 
-      socket.to(sala).emit("pizarra-limpiada");
+      // Notificar a todos, incluido quien solicitó limpiar
+      io.to(nombreSala).emit("pizarra-limpiada");
 
-      console.log(`Pizarra limpiada en la sala ${sala}`);
+      console.log(`Pizarra limpiada en la sala ${nombreSala}`);
     });
 
   });

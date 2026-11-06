@@ -1,4 +1,3 @@
-
 const express = require("express");
 const http = require("http");
 const cors = require("cors");
@@ -45,20 +44,87 @@ app.get("/api/estado", (req, res) => {
     funcionalidades: [
       "Gestión de salas",
       "Participantes en tiempo real",
-      "Sincronización de pizarra"
+      "Sincronización de pizarra",
+      "Chat en tiempo real",
+      "Videollamada WebRTC"
     ]
   });
 });
 
-// Detectar conexiones y desconexiones
+// Monitoreo avanzado de conexiones, salas y eventos en tiempo real (Etapa 4)
 io.on("connection", (socket) => {
+  console.log(`🟢 [CONEXIÓN] Nuevo cliente conectado ID: ${socket.id}`);
 
-  console.log("Usuario conectado:", socket.id);
+  let usuarioActual = "Christopher / Invitado";
+  let salaActual = null;
 
-  socket.on("disconnect", () => {
-    console.log("Usuario desconectado:", socket.id);
+  // Registrar cuando se unan a una sala (con filtro de duplicados)
+  socket.on("unirse-sala", (datos) => {
+    if (datos) {
+      const nuevaSala = datos.nombreSala || datos.sala;
+      const nuevoUsuario = datos.nombreUsuario || usuarioActual;
+
+      // Si el cliente ya está registrado en esta sala con este nombre, evitamos duplicar el log
+      if (salaActual === nuevaSala && usuarioActual === nuevoUsuario) {
+        return;
+      }
+
+      salaActual = nuevaSala;
+      usuarioActual = nuevoUsuario;
+
+      console.log(`🚪 [SALA] Usuario "${usuarioActual}" (${socket.id}) se unió a: "${salaActual}"`);
+    }
   });
 
+  // Registrar mensajes del chat si fluyen por aquí
+  socket.on("enviar-mensaje", (datos) => {
+    const { nombreSala, texto } = datos || {};
+    console.log(`💬 [CHAT] [Sala: ${nombreSala || salaActual}] ${usuarioActual}: "${texto}"`);
+  });
+
+  // Registrar limpieza de pizarra
+  socket.on("limpiar-pizarra", (sala) => {
+    console.log(`🧹 [PIZARRA] La sala "${sala || salaActual}" fue limpiada por ${usuarioActual}`);
+  });
+
+  // --- SEÑALIZACIÓN WEBRTC PARA VIDEOLLAMADA ---
+  socket.on("oferta-webrtc", (datos) => {
+    if (datos && datos.sala) {
+      socket.to(datos.sala).emit("oferta-webrtc", {
+        oferta: datos.oferta,
+        emisor: socket.id
+      });
+    }
+  });
+
+  socket.on("respuesta-webrtc", (datos) => {
+    if (datos && datos.sala) {
+      socket.to(datos.sala).emit("respuesta-webrtc", {
+        respuesta: datos.respuesta,
+        emisor: socket.id
+      });
+    }
+  });
+
+  socket.on("candidato-ice", (datos) => {
+    if (datos && datos.sala) {
+      socket.to(datos.sala).emit("candidato-ice", {
+        candidato: datos.candidato,
+        emisor: socket.id
+      });
+    }
+  });
+
+  // Monitorear el proceso previo a la desconexión
+  socket.on("disconnecting", () => {
+    const salas = Array.from(socket.rooms);
+    console.log(`⚠️ [AVISO] El cliente ${socket.id} (${usuarioActual}) va a salir de las salas:`, salas);
+  });
+
+  // Detectar desconexión definitiva
+  socket.on("disconnect", (reason) => {
+    console.log(`🔴 [DESCONEXIÓN] Cliente desconectado ID: ${socket.id} (${usuarioActual}). Razón: ${reason}`);
+  });
 });
 
 // Iniciar el servidor
