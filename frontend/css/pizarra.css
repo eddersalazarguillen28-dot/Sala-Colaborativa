@@ -536,12 +536,15 @@ input[type="range"] {
    ZOOM
 ===================================== */
 
+/* CONTENEDOR Y CANVAS */
 .contenedor-canvas {
     position: relative;
     width: 100%;
-    height: 550px;
-    overflow: auto;
-    background: #e5e7eb;
+    flex: 1;
+    min-height: 400px;        
+    height: auto;
+    overflow: hidden;        
+    background: #ffffff;
     border: 1px solid #ccc;
     border-radius: 8px;
 }
@@ -550,22 +553,19 @@ input[type="range"] {
     display: block;
     width: 100%;
     height: 100%;
-    background: white;
+    background: #ffffff;
     touch-action: none;
     cursor: crosshair;
-    transform-origin: top left;
 }
 
-/* =====================================
-   SELECCIÓN
-===================================== */
+#pizarraCanvas.seleccion-activa { cursor: crosshair; }
+#pizarraCanvas.texto-activo     { cursor: text; }
 
-#pizarraCanvas.seleccion-activa {
-    cursor: crosshair;
-}
-
-#pizarraCanvas.texto-activo {
-    cursor: text;
+@media (max-width: 900px) {
+    .contenedor-canvas {
+        height: 450px;
+        flex: none;
+    }
 }
 
 @media (max-width: 768px) {
