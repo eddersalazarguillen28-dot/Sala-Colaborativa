@@ -1,4 +1,5 @@
 const socket = io("http://localhost:3000");
+window.socketSala = socket;
 
 const usuarioChat = sessionStorage.getItem("nombreUsuario");
 const salaChat = sessionStorage.getItem("nombreSala");
@@ -13,8 +14,8 @@ socket.on("connect", () => {
     console.log("Conectado al servidor:", socket.id);
 
     socket.emit("unirse-sala", {
-        nombreSala,
-        nombreUsuario
+        nombreSala: salaChat,
+        nombreUsuario: usuarioChat
     });
 });
 
@@ -58,7 +59,7 @@ if (formularioMensaje && campoMensaje && contenedorMensajes) {
         if (texto === "") return;
 
         socket.emit("enviar-mensaje", {
-            nombreSala,
+            nombreSala: salaChat,
             texto
         });
         campoMensaje.value = "";

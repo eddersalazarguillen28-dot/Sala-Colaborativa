@@ -64,38 +64,20 @@
 
                     <label>Colores:</label>
 
-                    <button
-                        class="color-opcion seleccionado"
-                        data-color="#000000"
-                        style="background-color: #000000;"
+                    <button class="color-opcion seleccionado" data-color="#000000" style="background-color: #000000;"
                         title="Negro">
                     </button>
 
-                    <button
-                        class="color-opcion"
-                        data-color="#ef4444"
-                        style="background-color: #ef4444;"
-                        title="Rojo">
+                    <button class="color-opcion" data-color="#ef4444" style="background-color: #ef4444;" title="Rojo">
                     </button>
 
-                    <button
-                        class="color-opcion"
-                        data-color="#3b82f6"
-                        style="background-color: #3b82f6;"
-                        title="Azul">
+                    <button class="color-opcion" data-color="#3b82f6" style="background-color: #3b82f6;" title="Azul">
                     </button>
 
-                    <button
-                        class="color-opcion"
-                        data-color="#22c55e"
-                        style="background-color: #22c55e;"
-                        title="Verde">
+                    <button class="color-opcion" data-color="#22c55e" style="background-color: #22c55e;" title="Verde">
                     </button>
 
-                    <button
-                        class="color-opcion"
-                        data-color="#eab308"
-                        style="background-color: #eab308;"
+                    <button class="color-opcion" data-color="#eab308" style="background-color: #eab308;"
                         title="Amarillo">
                     </button>
 
@@ -105,10 +87,7 @@
                             +
                         </label>
 
-                        <input
-                            type="color"
-                            id="colorLapiz"
-                            value="#000000">
+                        <input type="color" id="colorLapiz" value="#000000">
                     </div>
 
                 </div>
@@ -118,12 +97,7 @@
 
                     <label for="grosorLapiz">Grosor:</label>
 
-                    <input
-                        type="range"
-                        id="grosorLapiz"
-                        min="1"
-                        max="30"
-                        value="4">
+                    <input type="range" id="grosorLapiz" min="1" max="30" value="4">
 
                     <span id="valorGrosor">4 px</span>
 
@@ -146,84 +120,96 @@
             </div>
         </section>
 
-        <section class="panel-videollamada">
-            <header class="encabezado-videollamada">
-                <h2>Audio y video</h2>
-                <p>Comunícate con los participantes</p>
-            </header>
+        <div class="panel-lateral">
+            <section class="panel-videollamada">
+                <header class="encabezado-videollamada">
+                    <h2>Audio y video</h2>
+                    <p>Comunícate con los participantes</p>
+                </header>
 
-            <div class="contenedor-videos">
-                <div class="video-participante">
-                    <video id="videoLocal" autoplay muted playsinline></video>
-                    <span>Tu cámara</span>
+                <div class="indicador-microfono">
+                    <label for="selectorMicrofono">
+                        Seleccionar micrófono:
+                    </label>
+
+                    <select id="selectorMicrofono">
+                        <option value="">Buscando micrófonos...</option>
+                    </select>
+
+                    <span id="estadoMicrofono">micrófono apagado</span>
+
+                    <div class="barra-audio">
+                        <div id="nivelAudio"></div>
+                    </div>
                 </div>
 
-            </div>
-
-            <div class="controles-videollamada">
-                <button id="btnMicrofono" type="button">
-                    Activar micrófono
-                </button>
-
-                <button id="btnCamara" type="button">
-                    Activar cámara
-                </button>
-
-                <button id="btnSalirLlamada" type="button">
-                    Salir de la llamada
-                </button>
-            </div>
-        </section>
-
-        <!-- CHAT COLABORATIVO -->
-        <aside class="panel-chat">
-
-            <header class="encabezado-chat">
-                <h2>Chat de la sala</h2>
-                <p>Comunícate con el equipo</p>
-            </header>
-
-            <section class="contenido-chat">
-
-                <!-- PARTICIPANTES -->
-                <div class="participantes">
-
-                    <h3>Participantes</h3>
-
-                    <div
-                        class="lista-participantes"
-                        id="listaParticipantes">
+                <div class="contenedor-videos">
+                    <div class="video-participante">
+                        <video id="videoLocal" autoplay muted playsinline></video>
+                        <span>Tu cámara</span>
                     </div>
 
                 </div>
 
-                <!-- CONVERSACIÓN -->
-                <section class="conversacion">
+                <div class="controles-videollamada">
+                    <button id="btnMicrofono" type="button">
+                        Activar micrófono
+                    </button>
 
-                    <div class="mensajes" id="mensajes">
+                    <button id="btnCamara" type="button">
+                        Activar cámara
+                    </button>
+
+                    <button id="btnSalirLlamada" type="button">
+                        Salir de la llamada
+                    </button>
+                </div>
+            </section>
+
+            <!-- CHAT COLABORATIVO -->
+            <aside class="panel-chat">
+
+                <header class="encabezado-chat">
+                    <h2>Chat de la sala</h2>
+                    <p>Comunícate con el equipo</p>
+                </header>
+
+                <section class="contenido-chat">
+
+                    <!-- PARTICIPANTES -->
+                    <div class="participantes">
+
+                        <h3>Participantes</h3>
+
+                        <div class="lista-participantes" id="listaParticipantes">
+                        </div>
+
                     </div>
 
-                    <form
-                        class="formulario-mensaje"
-                        id="formularioMensaje">
+                    <!-- CONVERSACIÓN -->
+                    <section class="conversacion">
 
-                        <input
-                            type="text"
-                            id="mensaje"
-                            placeholder="Escribe un mensaje..."
-                            autocomplete="off">
+                        <div class="mensajes" id="mensajes">
+                        </div>
 
-                        <button type="submit">
-                            Enviar
-                        </button>
+                        <form class="formulario-mensaje" id="formularioMensaje">
 
-                    </form>
+                            <input type="text" id="mensaje" placeholder="Escribe un mensaje..." autocomplete="off">
+
+                            <button type="submit">
+                                Enviar
+                            </button>
+
+                        </form>
+
+                    </section>
 
                 </section>
 
-            </section>
+            </aside>
+        </div>
 
-        </aside>
+
 
     </main>
 
@@ -232,7 +218,8 @@
     <script src="../javascripts/sala.js" defer></script>
     <script src="https://cdn.socket.io/4.8.4/socket.io.min.js" defer></script>
     <script src="../javascripts/chat.js" defer></script>
-    <script src="../javascripts/videollamada.js"></script>
+    <script src="../javascripts/videollamada.js" defer></script>
 
 </body>
+
 </html>
