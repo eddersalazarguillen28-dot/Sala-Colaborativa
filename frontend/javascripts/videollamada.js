@@ -9,52 +9,71 @@ let pistaVideo = null;
 
 async function iniciarDispositivo() {
     try {
-        flujoLocal = await
-        navigator.mediaDevices.getUserMedia({
-            video: false,
+        // Solicitamos audio y video (cámbialo a video: false si estrictamente solo quieres audio)
+        flujoLocal = await navigator.mediaDevices.getUserMedia({
+            video: true, 
             audio: true
         });
 
-        videoLocal.srcObject = flujoLocal;
+        if (videoLocal) {
+            videoLocal.srcObject = flujoLocal;
+        }
 
         pistaAudio = flujoLocal.getAudioTracks()[0];
         pistaVideo = flujoLocal.getVideoTracks()[0];
 
-        btnMicrofono.textContent = "Desactivar micrófono";
-        btnCamara.textContent = "Desactivar cámara";
+        if (btnMicrofono) btnMicrofono.textContent = "Desactivar micrófono";
+        if (btnCamara) btnCamara.textContent = "Desactivar cámara";
 
-        console.log("Cámara y micrófono activados");
+        console.log("Dispositivos de audio y video activados correctamente");
     } catch (error) {
         console.error("Error al acceder a los dispositivos:", error);
-        alert("No se pudo acceder a la cámara o al micrófono. Revisá los permisos");
+        alert("No se pudo acceder a la cámara o al micrófono. Revisá los permisos en tu navegador.");
     }
 }
 
-btnMicrofono.addEventListener("click", () => {
-    if (!pistaAudio) return;
+// Control del Micrófono
+if (btnMicrofono) {
+    btnMicrofono.addEventListener("click", () => {
+        if (!pistaAudio) return;
 
-    pistaAudio.enabled = !pistaAudio.enabled;
+        pistaAudio.enabled = !pistaAudio.enabled;
+        btnMicrofono.textContent = pistaAudio.enabled
+            ? "Desactivar micrófono"
+            : "Activar micrófono";
+    });
+}
 
-    btnMicrofono.textContent = pistaAudio.enabled
-    ? "Desactivar micrófono"
-    : "Activar micrófono";
-});
+// Control de la Cámara (Faltaba este evento)
+if (btnCamara) {
+    btnCamara.addEventListener("click", () => {
+        if (!pistaVideo) return;
 
-btnSalirLlamada.addEventListener("click", () => {
-    if (flujoLocal) {
-        flujoLocal.getTracks().forEach(pista => pista.stop());
+        pistaVideo.enabled = !pistaVideo.enabled;
+        btnCamara.textContent = pistaVideo.enabled
+            ? "Desactivar cámara"
+            : "Activar cámara";
+    });
+}
 
-        flujoLocal =null
-        pistaAudio =null
-        pistaVideo =null
+// Salir de la llamada y liberar recursos
+if (btnSalirLlamada) {
+    btnSalirLlamada.addEventListener("click", () => {
+        if (flujoLocal) {
+            flujoLocal.getTracks().forEach(pista => pista.stop());
 
-        videoLocal.srcObject = null;
+            flujoLocal = null;
+            pistaAudio = null;
+            pistaVideo = null;
 
-        btnMicrofono.textContent = "Activar micrófono";
-        btnCamara.textContent = "Activar cámara";
+            if (videoLocal) videoLocal.srcObject = null;
 
-        console.log("Saliste de la llamada");
-    }
-});
+            if (btnMicrofono) btnMicrofono.textContent = "Activar micrófono";
+            if (btnCamara) btnCamara.textContent = "Activar cámara";
+
+            console.log("Saliste de la llamada");
+        }
+    });
+}
 
 iniciarDispositivo();

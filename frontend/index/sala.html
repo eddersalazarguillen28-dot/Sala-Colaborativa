@@ -340,9 +340,13 @@
 </main>
 
 <!-- SCRIPTS -->
-<script src="../javascripts/pizarra.js" defer></script>
+
+<!-- Primero cargar Socket.IO -->
+<script src="https://cdn.socket.io/4.8.4/socket.io.min.js"></script>
+
+<!-- Después los archivos del proyecto -->
 <script src="../javascripts/sala.js" defer></script>
-<script src="https://cdn.socket.io/4.8.4/socket.io.min.js" defer></script>
+<script src="../javascripts/pizarra.js" defer></script>
 <script src="../javascripts/chat.js" defer></script>
 <script src="../javascripts/videollamada.js" defer></script>
 
