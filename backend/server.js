@@ -58,19 +58,22 @@ io.on("connection", (socket) => {
   let usuarioActual = "Christopher / Invitado";
   let salaActual = null;
 
-  // Registrar cuando se unan a una sala (con filtro de duplicados)
+  // Registrar cuando se unan a una sala (con filtro de duplicados y unión real)
   socket.on("unirse-sala", (datos) => {
     if (datos) {
       const nuevaSala = datos.nombreSala || datos.sala;
       const nuevoUsuario = datos.nombreUsuario || usuarioActual;
 
-      // Si el cliente ya está registrado en esta sala con este nombre, evitamos duplicar el log
+      // Si el cliente ya está registrado en esta sala con este nombre, evitamos duplicar
       if (salaActual === nuevaSala && usuarioActual === nuevoUsuario) {
         return;
       }
 
       salaActual = nuevaSala;
       usuarioActual = nuevoUsuario;
+
+      // Unir formalmente el socket a la sala de Socket.io
+      socket.join(salaActual);
 
       console.log(`🚪 [SALA] Usuario "${usuarioActual}" (${socket.id}) se unió a: "${salaActual}"`);
     }
@@ -127,9 +130,9 @@ io.on("connection", (socket) => {
   });
 });
 
-// Iniciar el servidor
-const PORT = 3000;
+// Iniciar el servidor (Dinámico para Render o local en puerto 3000)
+const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
-  console.log(`Servidor escuchando en http://localhost:${PORT}`);
+  console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
