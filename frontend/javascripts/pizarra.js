@@ -2,6 +2,7 @@
    1. ELEMENTOS HTML
 ================================================== */
 
+
 const canvas = document.getElementById("pizarraCanvas");
 const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
@@ -42,10 +43,22 @@ const contenedorCanvas = document.querySelector(".contenedor-canvas");
 ================================================== */
 
 const socket = io("http://localhost:3000");
+socket.on("connect", () => {
+    console.log("ID DEL SOCKET DE PIZARRA:", socket.id);
+});
 window.socket = socket; // <--- Esto permite que chat.js y videollamada.js compartan la misma conexión
 
-const salaPizarra = document.getElementById("nombreSalaActual")?.textContent || "sala-prueba";
-const usuarioPizarra = document.getElementById("usuarioActual")?.textContent || "Christopher";
+const salaPizarra = sessionStorage.getItem("nombreSala");
+const usuarioPizarra = sessionStorage.getItem("nombreUsuario");
+
+console.log("Sala:", salaPizarra);
+console.log("Usuario:", usuarioPizarra);
+
+console.log("ENVIAR SOLICITUD PARA UNIRSE:", {
+    sala: salaPizarra,
+    usuario: usuarioPizarra,
+    socket: socket.id
+});
 
 socket.emit("unirse-sala", { 
     nombreSala: salaPizarra, 
