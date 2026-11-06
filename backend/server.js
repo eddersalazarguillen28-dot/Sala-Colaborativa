@@ -80,7 +80,7 @@ io.on("connection", (socket) => {
       });
 
       console.log(`[SALA] Usuario "${usuarioActual}" (${socket.id}) se unió a: "${salaActual}"`);
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
       // Si el cliente ya está registrado en esta sala con este nombre, evitamos duplicar
       if (salaActual === nuevaSala && usuarioActual === nuevoUsuario) {
@@ -144,6 +144,13 @@ io.on("connection", (socket) => {
 
   // Detectar desconexión definitiva
   socket.on("disconnect", (reason) => {
+    if(salaActual && salasUsuarios[salaActual]){
+      salasUsuarios[salaActual] = salasUsuarios[salaActual].filter(u => u !== usuarioActual);
+      io.to(salaActual).emit("user-left",{
+        nombre:usuarioActual,
+        usuarios:salasUsuarios[salaActual]
+      });
+    }
     console.log(`🔴 [DESCONEXIÓN] Cliente desconectado ID: ${socket.id} (${usuarioActual}). Razón: ${reason}`);
   });
 });
