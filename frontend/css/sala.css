@@ -386,8 +386,10 @@ input[type="range"] {
     align-items: center;
     gap: 8px;
     padding: 8px 5px;
-    color: #dce4f5;
+    color: black !important;
     font-size: 12px;
+    background-color: white;
+    border-radius: 5px;
 }
 
 .estado-conexion {

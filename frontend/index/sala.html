@@ -38,7 +38,6 @@
 
                     <button id="btnLapiz" class="icono-herramienta activa" type="button" title="Lápiz"
                         aria-label="Lápiz">
-
                         <svg viewBox="0 0 24 24">
                             <path d="m15 5 4 4M4 20l4-.8L19 8a2.8 2.8 0 0 0-4-4L4 15z" />
                         </svg>
@@ -46,7 +45,6 @@
 
                     <button id="btnBorrador" class="icono-herramienta" type="button" title="Borrador"
                         aria-label="Borrador">
-
                         <svg viewBox="0 0 24 24">
                             <path d="m7 21 12-12a2.8 2.8 0 0 0-4-4L3 17l4 4z" />
                             <path d="m14 8 4 4M7 21h14" />
@@ -55,7 +53,6 @@
 
                     <button id="btnTexto" class="icono-herramienta" type="button" title="Insertar texto"
                         aria-label="Texto">
-
                         <svg viewBox="0 0 24 24">
                             <path d="M4 7V4h16v3M12 4v16M8 20h8" />
                         </svg>
@@ -63,7 +60,6 @@
 
                     <button id="btnRellenar" class="icono-herramienta" type="button" title="Bote de pintura"
                         aria-label="Rellenar">
-
                         <svg viewBox="0 0 24 24">
                             <path d="m12 3 8 8-9 9H4l-2-2 10-10" />
                             <path d="m7 8 9 9M19 15c2 2 3 3 3 5a2 2 0 0 1-4 0c0-1 0-3 1-5z" />
@@ -76,7 +72,6 @@
                 <div class="grupo-herramientas">
 
                     <select id="tipoPincel" class="select-icono" title="Tipos de pincel">
-
                         <option value="lapiz">Lápiz clásico</option>
                         <option value="pincel">Pincel clásico</option>
                         <option value="aerografo">Aerógrafo</option>
@@ -84,7 +79,6 @@
                         <option value="oleo">Óleo</option>
                         <option value="marcador">Marcador</option>
                         <option value="crayon">Crayón</option>
-
                     </select>
 
                 </div>
@@ -93,14 +87,12 @@
                 <div class="grupo-herramientas">
 
                     <select id="herramientaForma" class="select-icono" title="Formas geométricas">
-
                         <option value="">Formas</option>
                         <option value="rectangulo">Rectángulo</option>
                         <option value="circulo">Círculo</option>
                         <option value="linea">Línea recta</option>
                         <option value="triangulo">Triángulo</option>
                         <option value="flecha">Flecha</option>
-
                     </select>
 
                 </div>
@@ -109,16 +101,13 @@
                 <div class="grupo-herramientas">
 
                     <select id="tipoSeleccion" class="select-icono" title="Herramienta de selección">
-
                         <option value="">Selección</option>
                         <option value="rectangular">Selección rectangular</option>
                         <option value="libre">Selección libre</option>
-
                     </select>
 
                     <button id="btnRecortar" class="icono-herramienta" type="button" title="Recortar"
                         aria-label="Recortar">
-
                         <svg viewBox="0 0 24 24">
                             <path d="M6 3v12a3 3 0 0 0 3 3h12M18 21V9a3 3 0 0 0-3-3H3" />
                             <path d="m8 8 8 8" />
@@ -132,19 +121,16 @@
 
                     <button id="btnRedimensionar" class="icono-herramienta" type="button" title="Cambiar tamaño"
                         aria-label="Cambiar tamaño">
-
                         <svg viewBox="0 0 24 24">
                             <path d="M4 9V4h5M20 15v5h-5M4 4l7 7M20 20l-7-7" />
                         </svg>
                     </button>
 
                     <select id="tipoGiro" class="select-icono" title="Girar contenido">
-
                         <option value="">Girar</option>
                         <option value="90">90°</option>
                         <option value="180">180°</option>
                         <option value="270">270°</option>
-
                     </select>
 
                 </div>
@@ -169,7 +155,6 @@
 
                     <div class="selector-personalizado">
                         <label for="colorLapiz" title="Elegir color personalizado">+</label>
-
                         <input type="color" id="colorLapiz" value="#000000">
                     </div>
 
@@ -194,7 +179,6 @@
 
                     <button id="btnDeshacer" class="icono-herramienta" type="button" title="Deshacer"
                         aria-label="Deshacer">
-
                         <svg viewBox="0 0 24 24">
                             <path d="M9 14 4 9l5-5" />
                             <path d="M4 9h10a6 6 0 0 1 0 12h-2" />
@@ -203,7 +187,6 @@
 
                     <button id="btnRehacer" class="icono-herramienta" type="button" title="Rehacer"
                         aria-label="Rehacer">
-
                         <svg viewBox="0 0 24 24">
                             <path d="m15 14 5-5-5-5" />
                             <path d="M20 9H10a6 6 0 0 0 0 12h2" />
@@ -215,19 +198,14 @@
                 <!-- ZOOM -->
                 <div class="grupo-herramientas">
 
-                    <button id="btnZoomMenos" class="icono-herramienta" type="button" title="Alejar">
-                        −
-                    </button>
+                    <button id="btnZoomMenos" class="icono-herramienta" type="button" title="Alejar">−</button>
 
                     <span id="valorZoom">100%</span>
 
-                    <button id="btnZoomMas" class="icono-herramienta" type="button" title="Acercar">
-                        +
-                    </button>
+                    <button id="btnZoomMas" class="icono-herramienta" type="button" title="Acercar">+</button>
 
-                    <button id="btnZoomReset" class="icono-herramienta" type="button" title="Restablecer zoom">
-                        1:1
-                    </button>
+                    <button id="btnZoomReset" class="icono-herramienta" type="button"
+                        title="Restablecer zoom">1:1</button>
 
                 </div>
 
@@ -254,8 +232,10 @@
             </div>
 
         </section>
-        
+
+        <!-- PANEL LATERAL -->
         <div class="panel-lateral">
+
             <!-- VIDEOLLAMADA -->
             <section class="panel-videollamada">
 
@@ -287,9 +267,7 @@
                 <div class="contenedor-videos">
 
                     <div class="video-participante">
-                        <video id="videoLocal" autoplay muted playsinline>
-                        </video>
-
+                        <video id="videoLocal" autoplay muted playsinline></video>
                         <span>Tu cámara</span>
                     </div>
 
@@ -324,16 +302,45 @@
 
                 <section class="contenido-chat">
 
-<!-- SCRIPTS -->
+                    <!-- PARTICIPANTES -->
+                    <div class="participantes">
+                        <h3>Participantes</h3>
 
-<!-- Primero cargar Socket.IO -->
-<script src="https://cdn.socket.io/4.8.4/socket.io.min.js"></script>
+                        <div class="lista-participantes" id="listaParticipantes">
+                        </div>
+                    </div>
 
-<!-- Después los archivos del proyecto -->
-<script src="../javascripts/sala.js" defer></script>
-<script src="../javascripts/pizarra.js" defer></script>
-<script src="../javascripts/chat.js" defer></script>
-<script src="../javascripts/videollamada.js" defer></script>
+                    <!-- CONVERSACIÓN -->
+                    <section class="conversacion">
+
+                        <div class="mensajes" id="mensajes"></div>
+
+                        <!-- FORMULARIO PARA ENVIAR MENSAJES -->
+                        <form class="formulario-mensaje" id="formularioMensaje">
+
+                            <input type="text" id="mensaje" placeholder="Escribe un mensaje..." autocomplete="off">
+
+                            <button type="submit">Enviar</button>
+
+                        </form>
+
+                    </section>
+
+                </section>
+
+            </aside>
+
+        </div>
+
+    </main>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdn.socket.io/4.8.4/socket.io.min.js"></script>
+
+    <script src="../javascripts/sala.js" defer></script>
+    <script src="../javascripts/pizarra.js" defer></script>
+    <script src="../javascripts/chat.js" defer></script>
+    <script src="../javascripts/videollamada.js" defer></script>
 
 </body>
 

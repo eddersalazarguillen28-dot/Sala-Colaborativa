@@ -8,6 +8,8 @@ function configurarSalas(io) {
     // Un usuario solicita entrar a una sala
     socket.on("unirse-sala", ({ nombreSala, nombreUsuario } = {}) => {
 
+      console.log("SOLICITUD RECIBIDA:", socket.id, nombreSala, nombreUsuario);
+
       if (
         typeof nombreSala !== "string" ||
         typeof nombreUsuario !== "string" ||
@@ -39,6 +41,7 @@ function configurarSalas(io) {
 
       socket.emit("lista-participantes", participantes);
 
+      io.to(nombreSala).emit("lista-participantes", (participantes));
       // Avisar a los demás que llegó un usuario
       socket.to(nombreSala).emit("usuario-unido", {
         id: socket.id,
@@ -52,7 +55,7 @@ function configurarSalas(io) {
       });
     });
 
-    socket.on("enviar-mensaje", ({ nombreSala, texto} = {}) => {
+    socket.on("enviar-mensaje", ({ nombreSala, texto } = {}) => {
 
       if (
         typeof nombreSala !== "string" ||
