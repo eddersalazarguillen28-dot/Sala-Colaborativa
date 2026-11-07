@@ -91,31 +91,62 @@ io.on("connection", (socket) => {
   });
 
   // --- SEÑALIZACIÓN WEBRTC PARA VIDEOLLAMADA ---
+
   socket.on("oferta-webrtc", (datos) => {
-    if (datos && datos.sala) {
-      socket.to(datos.sala).emit("oferta-webrtc", {
-        oferta: datos.oferta,
-        emisor: socket.id
-      });
-    }
+    if (
+      !datos ||
+      !datos.sala ||
+      !datos.destino ||
+      !datos.oferta ||
+      !socket.rooms.has(datos.sala)
+    ) return;
+
+    const destinatario = io.sockets.sockets.get(datos.destino);
+
+    if (!destinatario || !destinatario.rooms.has(datos.sala)) return;
+
+    io.to(datos.destino).emit("oferta-webrtc", {
+      oferta: datos.oferta,
+      emisor: socket.id
+    });
   });
 
   socket.on("respuesta-webrtc", (datos) => {
-    if (datos && datos.sala) {
-      socket.to(datos.sala).emit("respuesta-webrtc", {
-        respuesta: datos.respuesta,
-        emisor: socket.id
-      });
-    }
+    if (
+      !datos ||
+      !datos.sala ||
+      !datos.destino ||
+      !datos.respuesta ||
+      !socket.rooms.has(datos.sala)
+    ) return;
+
+    const destinatario = io.sockets.sockets.get(datos.destino);
+
+    if (!destinatario || !destinatario.rooms.has(datos.sala)) return;
+
+    io.to(datos.destino).emit("respuesta-webrtc", {
+      respuesta: datos.respuesta,
+      emisor: socket.id
+    });
   });
 
   socket.on("candidato-ice", (datos) => {
-    if (datos && datos.sala) {
-      socket.to(datos.sala).emit("candidato-ice", {
-        candidato: datos.candidato,
-        emisor: socket.id
-      });
-    }
+    if (
+      !datos ||
+      !datos.sala ||
+      !datos.destino ||
+      !datos.candidato ||
+      !socket.rooms.has(datos.sala)
+    ) return;
+
+    const destinatario = io.sockets.sockets.get(datos.destino);
+
+    if (!destinatario || !destinatario.rooms.has(datos.sala)) return;
+
+    io.to(datos.destino).emit("candidato-ice", {
+      candidato: datos.candidato,
+      emisor: socket.id
+    });
   });
 
   // Monitorear el proceso previo a la desconexión

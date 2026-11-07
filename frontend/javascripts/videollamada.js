@@ -30,19 +30,433 @@ let pistaVideo = null;
 
 let microfonoSeleccionado = "";
 
+const conexionesWebRTC = new Map();
+const candidatosPendientes = new Map();
+
+const configuracionRTC = {
+    iceServers: [
+        {
+            urls: "stun:stun.l.google.com:19302"
+        }
+    ]
+};
+
+const salaVideo = sessionStorage.getItem("nombreSala");
+const usuarioVideo = sessionStorage.getItem("nombreUsuario");
+const participantesVideo = new Map();
+
 // ==========================================
-// ANALIZADOR DE AUDIO
+// CREAR CONEXIÓN WEBRTC
 // ==========================================
+
+function crearConexionWebRTC(idParticipante) {
+
+    if (conexionesWebRTC.has(idParticipante)) {
+        return conexionesWebRTC.get(idParticipante);
+    }
+
+    const conexion = new RTCPeerConnection(configuracionRTC);
+
+    // Recibir audio y video del participante remoto
+    conexion.ontrack = (evento) => {
+        if (!contenedorVideosRemotos) return;
+
+        let video = document.getElementById(`video-remoto-${idParticipante}`);
+
+        if (!video) {
+            const tarjeta = document.createElement("div");
+            tarjeta.className = "video-participante";
+            tarjeta.id = `participante-video-${idParticipante}`;
+
+            video = document.createElement("video");
+            video.id = `video-remoto-${idParticipante}`;
+            video.autoplay = true;
+            video.playsInline = true;
+
+            const nombre = document.createElement("span");
+            nombre.textContent = participantesVideo.get(idParticipante) || "Participante";
+
+            tarjeta.appendChild(video);
+            tarjeta.appendChild(nombre);
+            contenedorVideosRemotos.appendChild(tarjeta);
+        }
+
+        if (evento.streams && evento.streams[0]) {
+            video.srcObject = evento.streams[0];
+        } else {
+            if (!video.srcObject) {
+                video.srcObject = new MediaStream();
+            }
+
+            video.srcObject.addTrack(evento.track);
+        }
+    };
+
+    conexionesWebRTC.set(idParticipante, conexion);
+
+    console.log(
+        "Conexión WebRTC creada para:",
+        idParticipante
+    );
+
+    return conexion;
+}
+
+// ==========================================
+// CONTROL DE PARTICIPANTES
+// ==========================================
+
+// ==========================================
+// CONECTAR AUTOMÁTICAMENTE A LOS PARTICIPANTES
+// ==========================================
+
+socketVideo.on("lista-participantes", (participantes) => {
+
+    participantesVideo.clear();
+
+    participantes.forEach((participante) => {
+
+        // Ignorar nuestro propio usuario
+        if (participante.id === socketVideo.id) return;
+
+        participantesVideo.set(
+            participante.id,
+            participante.nombre
+        );
+
+        // Evitar que ambos usuarios inicien la conexión
+        if (
+            socketVideo.id.localeCompare(participante.id) < 0 &&
+            !conexionesWebRTC.has(participante.id)
+        ) {
+
+            iniciarConexionComoEmisor(participante.id);
+
+        }
+
+    });
+
+    console.log(
+        "Participantes disponibles:",
+        participantesVideo
+    );
+
+});
+
+// ==========================================
+// COMPARTIR AUDIO Y VIDEO
+// ==========================================
+
+function agregarPistasAConexion(conexion) {
+
+    if (flujoAudio) {
+        flujoAudio.getAudioTracks().forEach((pista) => {
+            conexion.addTrack(pista, flujoAudio);
+        });
+    }
+
+    if (flujoCamara) {
+        flujoCamara.getVideoTracks().forEach((pista) => {
+            conexion.addTrack(pista, flujoCamara);
+        });
+    }
+
+}
+
+// ==========================================
+// INICIAR CONEXIÓN COMO EMISOR
+// ==========================================
+
+async function iniciarConexionComoEmisor(idParticipante) {
+
+    try {
+
+        const conexion = crearConexionWebRTC(idParticipante);
+
+        // Compartir las pistas disponibles
+        agregarPistasAConexion(conexion);
+
+        // Enviar candidatos ICE al participante
+        conexion.onicecandidate = (evento) => {
+
+            if (evento.candidate) {
+
+                socketVideo.emit("candidato-ice", {
+                    sala: salaVideo,
+                    destino: idParticipante,
+                    candidato: evento.candidate
+                });
+
+            }
+
+        };
+
+        // Crear oferta
+        const oferta = await conexion.createOffer();
+
+        await conexion.setLocalDescription(oferta);
+
+        // Enviar oferta al otro participante
+        socketVideo.emit("oferta-webrtc", {
+            sala: salaVideo,
+            destino: idParticipante,
+            oferta: conexion.localDescription
+        });
+
+        console.log(
+            "Oferta WebRTC enviada a:",
+            idParticipante
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Error al iniciar conexión WebRTC:",
+            error
+        );
+
+    }
+
+}
+
+// ==========================================
+// RECIBIR OFERTA WEBRTC
+// ==========================================
+
+socketVideo.on("oferta-webrtc", async (datos) => {
+
+    try {
+
+        if (!datos || !datos.emisor || !datos.oferta) return;
+
+        const idParticipante = datos.emisor;
+
+        const conexion = crearConexionWebRTC(idParticipante);
+
+        // Compartir las pistas locales disponibles
+        agregarPistasAConexion(conexion);
+
+        // Preparar candidatos ICE
+        conexion.onicecandidate = (evento) => {
+
+            if (evento.candidate) {
+
+                socketVideo.emit("candidato-ice", {
+                    sala: salaVideo,
+                    destino: idParticipante,
+                    candidato: evento.candidate
+                });
+
+            }
+
+        };
+
+        // Registrar la oferta recibida
+        await conexion.setRemoteDescription(
+            new RTCSessionDescription(datos.oferta)
+        );
+
+        // Procesar candidatos ICE pendientes
+        const candidatos = candidatosPendientes.get(idParticipante) || [];
+
+        for (const candidato of candidatos) {
+            await conexion.addIceCandidate(
+                new RTCIceCandidate(candidato)
+            );
+        }
+
+        candidatosPendientes.delete(idParticipante);
+
+        // Crear respuesta
+        const respuesta = await conexion.createAnswer();
+
+        await conexion.setLocalDescription(respuesta);
+
+        // Enviar respuesta al emisor
+        socketVideo.emit("respuesta-webrtc", {
+            sala: salaVideo,
+            destino: idParticipante,
+            respuesta: conexion.localDescription
+        });
+
+        console.log(
+            "Respuesta WebRTC enviada a:",
+            idParticipante
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Error al recibir oferta WebRTC:",
+            error
+        );
+
+    }
+
+});
+
+// ==========================================
+// RECIBIR RESPUESTA WEBRTC
+// ==========================================
+
+socketVideo.on("respuesta-webrtc", async (datos) => {
+
+    try {
+
+        if (!datos || !datos.emisor || !datos.respuesta) return;
+
+        const conexion = conexionesWebRTC.get(datos.emisor);
+
+        if (!conexion) {
+            console.warn(
+                "No existe conexión con:",
+                datos.emisor
+            );
+            return;
+        }
+
+        // Registrar la respuesta del participante
+        await conexion.setRemoteDescription(
+            new RTCSessionDescription(datos.respuesta)
+        );
+
+        console.log(
+            "Respuesta WebRTC recibida de:",
+            datos.emisor
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Error al recibir respuesta WebRTC:",
+            error
+        );
+
+    }
+
+});
+
+// ==========================================
+// RECIBIR CANDIDATOS ICE
+// ==========================================
+
+socketVideo.on("candidato-ice", async (datos) => {
+
+    try {
+
+        if (!datos || !datos.emisor || !datos.candidato) return;
+
+        const idParticipante = datos.emisor;
+
+        const conexion = conexionesWebRTC.get(idParticipante);
+
+        // Si todavía no existe la conexión o no tiene
+        // descripción remota, guardar el candidato.
+        if (!conexion || !conexion.remoteDescription) {
+
+            if (!candidatosPendientes.has(idParticipante)) {
+                candidatosPendientes.set(idParticipante, []);
+            }
+
+            candidatosPendientes.get(idParticipante).push(
+                datos.candidato
+            );
+
+            return;
+        }
+
+        await conexion.addIceCandidate(
+            new RTCIceCandidate(datos.candidato)
+        );
+
+        console.log(
+            "Candidato ICE recibido de:",
+            idParticipante
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Error al recibir candidato ICE:",
+            error
+        );
+
+    }
+
+});
+
+
+// Cuando entra un nuevo participante
+socketVideo.on("usuario-unido", (participante) => {
+
+    if (!participante || participante.id === socketVideo.id) return;
+
+    participantesVideo.set(
+        participante.id,
+        participante.nombre
+    );
+
+    console.log(
+        "Nuevo participante:",
+        participante.nombre
+    );
+
+});
+
+
+// Cuando un participante sale de la sala
+function eliminarParticipante(idParticipante) {
+
+    participantesVideo.delete(idParticipante);
+
+    // Eliminar el video del participante que salió
+    const tarjetaVideo = document.getElementById(`participante-video-${idParticipante}`);
+
+    if (tarjetaVideo) {
+        tarjetaVideo.remove();
+    }
+
+    const conexion = conexionesWebRTC.get(idParticipante);
+    candidatosPendientes.delete(idParticipante);
+
+    if (conexion) {
+        conexion.close();
+        conexionesWebRTC.delete(idParticipante);
+    }
+
+    console.log(
+        "Participante eliminado:",
+        idParticipante
+    );
+
+}
+
+
+// Escuchar salida voluntaria
+socketVideo.on("usuario-salio", (participante) => {
+
+    if (participante && participante.id) {
+        eliminarParticipante(participante.id);
+    }
+
+});
+
+
+// Escuchar desconexiones
+socketVideo.on("usuario-desconectado", (participante) => {
+
+    if (participante && participante.id) {
+        eliminarParticipante(participante.id);
+    }
+
+});
+
 
 let contextoAudio = null;
 let analizador = null;
 let fuenteAudio = null;
 let datosAudio = null;
 let animacionAudio = null;
-
-// ==========================================
-// COMPROBAR COMPATIBILIDAD
-// ==========================================
 
 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
 
