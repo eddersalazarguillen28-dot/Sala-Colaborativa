@@ -4,71 +4,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Chat - Sala Colaborativa</title>
 
     <link rel="stylesheet" href="../css/chat.css">
+
 </head>
 
 <body>
+
     <main class="contenedor-chat">
 
         <header class="encabezado-chat">
+
             <h1>Chat de la sala</h1>
+
             <p>Sala de trabajo colaborativa</p>
+
+            <p id="nombreSalaActual"></p>
+
+            <p id="usuarioActual"></p>
+
         </header>
 
         <section class="contenido-chat">
 
+            <!-- PARTICIPANTES -->
+
             <aside class="participantes">
+
                 <h2>Participantes</h2>
 
-                <div class="lista-participantes">
-                    <div class="participante">
-                        <span class="estado-conexion"></span>
-                        <span>Christopher</span>
-                    </div>
-                    <div class="participante">
-                        <span class="estado-conexion"></span>
-                        <span>Estefania</span>
-                    </div>
-                    <div class="participante">
-                        <span class="estado-conexion"></span>
-                        <span>Edder</span>
-                    </div>
-                    <div class="participante">
-                        <span class="estado-conexion"></span>
-                        <span>Kooper</span>
-                    </div>
+                <div
+                    class="lista-participantes"
+                    id="listaParticipantes">
                 </div>
+
             </aside>
+
+            <!-- CONVERSACIÓN -->
 
             <section class="conversacion">
 
-                <div class="mensajes">
-                    <div class="mensaje recibido">
-                        <span class="nombre-usuario">Edder</span>
-                        <p>Hola, como estan?</p>
-                    </div>
-                    <div class="mensaje enviado">
-                        <span class="nombre-usuario">Kooper</span>
-                        <p>Biennn</p>
-                    </div>
-                    <div class="mensaje recibido">
-                        <span class="nombre-usuario">Christopher</span>
-                        <p>Todo bien</p>
-                    </div>
+                <div
+                    class="mensajes"
+                    id="mensajes">
+
                 </div>
 
-                <form class="formulario-mensaje">
-                    <input type="text" placeholder="Escribe un mensaje..." id="mensaje">
+                <!-- FORMULARIO -->
 
-                    <button type="button">
+                <form
+                    class="formulario-mensaje"
+                    id="formularioMensaje">
+
+                    <input
+                        type="text"
+                        placeholder="Escribe un mensaje..."
+                        id="mensaje"
+                        autocomplete="off"
+                        maxlength="2000"
+                        required>
+
+                    <button type="submit">
                         Enviar
                     </button>
+
                 </form>
+
             </section>
+
         </section>
+
     </main>
+
+    <!-- SOCKET.IO -->
+
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+
+    <!-- CONEXIÓN Y CHAT -->
+    <!-- La inicialización global del socket se agregará
+         cuando revisemos el archivo correspondiente. -->
+
+    <script src="../javascripts/sala.js"></script>
+    <script src="../javascripts/chat.js"></script>
+
 </body>
 
 </html>

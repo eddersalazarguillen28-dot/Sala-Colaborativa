@@ -1,3 +1,6 @@
+
+"use strict";
+
 // ==========================================
 // CONEXIÓN SOCKET.IO
 // ==========================================
@@ -10,6 +13,9 @@ const socketVideo = window.socket;
 
 const videoLocal = document.getElementById("videoLocal");
 
+const contenedorVideosRemotos =
+    document.getElementById("contenedorVideosRemotos");
+
 const btnMicrofono = document.getElementById("btnMicrofono");
 const btnCamara = document.getElementById("btnCamara");
 const btnSalirLlamada = document.getElementById("btnSalirLlamada");
@@ -19,167 +25,272 @@ const nivelAudio = document.getElementById("nivelAudio");
 const selectorMicrofono = document.getElementById("selectorMicrofono");
 
 // ==========================================
-// FLUJOS DE AUDIO Y VIDEO
+// VALIDAR CONEXIÓN Y DATOS
 // ==========================================
 
-let flujoAudio = null;
-let flujoCamara = null;
+if (!socketVideo) {
 
-let pistaAudio = null;
-let pistaVideo = null;
+    console.error(
+        "No se encontró window.socket. Revisá el orden de carga de los scripts."
+    );
 
-let microfonoSeleccionado = "";
+} else {
 
-const conexionesWebRTC = new Map();
-const candidatosPendientes = new Map();
+    const salaVideo = sessionStorage.getItem("nombreSala");
+    const usuarioVideo = sessionStorage.getItem("nombreUsuario");
 
-const configuracionRTC = {
-    iceServers: [
-        {
-            urls: "stun:stun.l.google.com:19302"
+    if (!salaVideo || !usuarioVideo) {
+
+        console.error("No se encontraron los datos de la sala.");
+
+    } else if (!window.RTCPeerConnection) {
+
+        console.error(
+            "Este navegador no soporta conexiones WebRTC."
+        );
+
+    } else {
+
+        // ==========================================
+        // CONFIGURACIÓN WEBRTC
+        // ==========================================
+
+        const configuracionRTC = {
+            iceServers: [
+                {
+                    urls: "stun:stun.l.google.com:19302"
+                }
+            ]
+        };
+
+        // ==========================================
+        // ESTADO DE LA VIDEOLLAMADA
+        // ==========================================
+
+        let flujoAudio = null;
+        let flujoCamara = null;
+
+        let pistaAudio = null;
+        let pistaVideo = null;
+
+        let microfonoSeleccionado = "";
+
+        const conexionesWebRTC = new Map();
+        const participantesVideo = new Map();
+        const candidatosPendientes = new Map();
+
+        const ofertasEnProceso = new Set();
+        const respuestasEnProceso = new Set();
+
+        // ==========================================
+        // ESTADO DEL ANALIZADOR DE AUDIO
+        // ==========================================
+
+        let contextoAudio = null;
+        let analizador = null;
+        let fuenteAudio = null;
+        let datosAudio = null;
+        let animacionAudio = null;
+
+        // ==========================================
+        // VALIDAR PERTENENCIA A LA SALA
+        // ==========================================
+
+        function perteneceALaSala() {
+
+            return (
+                socketVideo.connected &&
+                typeof socketVideo.id === "string" &&
+                Boolean(salaVideo) &&
+                Boolean(usuarioVideo)
+            );
+
         }
-    ]
-};
 
-const salaVideo = sessionStorage.getItem("nombreSala");
-const usuarioVideo = sessionStorage.getItem("nombreUsuario");
-const participantesVideo = new Map();
+        // ==========================================
+        // OBTENER VIDEO REMOTO
+        // ==========================================
 
-// ==========================================
-// CREAR CONEXIÓN WEBRTC
-// ==========================================
+        function obtenerVideoRemoto(idParticipante) {
 
-function crearConexionWebRTC(idParticipante) {
+            if (!contenedorVideosRemotos) {
+                return null;
+            }
 
-    if (conexionesWebRTC.has(idParticipante)) {
-        return conexionesWebRTC.get(idParticipante);
-    }
+            let video = document.getElementById(
+                `video-remoto-${idParticipante}`
+            );
 
-    const conexion = new RTCPeerConnection(configuracionRTC);
+            if (video) {
+                return video;
+            }
 
-    // Recibir audio y video del participante remoto
-    conexion.ontrack = (evento) => {
-        if (!contenedorVideosRemotos) return;
-
-        let video = document.getElementById(`video-remoto-${idParticipante}`);
-
-        if (!video) {
             const tarjeta = document.createElement("div");
+
             tarjeta.className = "video-participante";
             tarjeta.id = `participante-video-${idParticipante}`;
 
             video = document.createElement("video");
+
             video.id = `video-remoto-${idParticipante}`;
             video.autoplay = true;
             video.playsInline = true;
 
             const nombre = document.createElement("span");
-            nombre.textContent = participantesVideo.get(idParticipante) || "Participante";
+
+            nombre.textContent =
+                participantesVideo.get(idParticipante) ||
+                "Participante";
 
             tarjeta.appendChild(video);
             tarjeta.appendChild(nombre);
+
             contenedorVideosRemotos.appendChild(tarjeta);
+
+            return video;
+
         }
 
-        if (evento.streams && evento.streams[0]) {
-            video.srcObject = evento.streams[0];
-        } else {
-            if (!video.srcObject) {
-                video.srcObject = new MediaStream();
+        // ==========================================
+        // ACTUALIZAR NOMBRE DEL VIDEO REMOTO
+        // ==========================================
+
+        function actualizarNombreParticipante(idParticipante) {
+
+            const tarjeta = document.getElementById(
+                `participante-video-${idParticipante}`
+            );
+
+            if (!tarjeta) return;
+
+            const etiqueta = tarjeta.querySelector("span");
+
+            if (etiqueta) {
+
+                etiqueta.textContent =
+                    participantesVideo.get(idParticipante) ||
+                    "Participante";
+
             }
 
-            video.srcObject.addTrack(evento.track);
         }
-    };
 
-    conexionesWebRTC.set(idParticipante, conexion);
+        // ==========================================
+        // BUSCAR TRANSCEPTOR POR TIPO
+        // ==========================================
 
-    console.log(
-        "Conexión WebRTC creada para:",
-        idParticipante
-    );
+        function obtenerTransceptor(conexion, tipo) {
 
-    return conexion;
-}
+            return conexion.getTransceivers().find(
+                transceptor =>
+                    transceptor.receiver &&
+                    transceptor.receiver.track &&
+                    transceptor.receiver.track.kind === tipo
+            );
 
-// ==========================================
-// CONTROL DE PARTICIPANTES
-// ==========================================
+        }
 
-// ==========================================
-// CONECTAR AUTOMÁTICAMENTE A LOS PARTICIPANTES
-// ==========================================
+        // ==========================================
+        // CREAR CONEXIÓN WEBRTC
+        // ==========================================
 
-socketVideo.on("lista-participantes", (participantes) => {
-
-    participantesVideo.clear();
-
-    participantes.forEach((participante) => {
-
-        // Ignorar nuestro propio usuario
-        if (participante.id === socketVideo.id) return;
-
-        participantesVideo.set(
-            participante.id,
-            participante.nombre
-        );
-
-        // Evitar que ambos usuarios inicien la conexión
-        if (
-            socketVideo.id.localeCompare(participante.id) < 0 &&
-            !conexionesWebRTC.has(participante.id)
+        function crearConexionWebRTC(
+            idParticipante,
+            crearTransceptores = false
         ) {
 
-            iniciarConexionComoEmisor(participante.id);
+            if (conexionesWebRTC.has(idParticipante)) {
 
-        }
+                return conexionesWebRTC.get(idParticipante);
 
-    });
+            }
 
-    console.log(
-        "Participantes disponibles:",
-        participantesVideo
-    );
+            const conexion = new RTCPeerConnection(
+                configuracionRTC
+            );
 
-});
+            // Solamente quien inicia la oferta crea
+            // los transceptores inicialmente.
 
-// ==========================================
-// COMPARTIR AUDIO Y VIDEO
-// ==========================================
+            if (crearTransceptores) {
 
-function agregarPistasAConexion(conexion) {
+                conexion.addTransceiver("audio", {
+                    direction: "sendrecv"
+                });
 
-    if (flujoAudio) {
-        flujoAudio.getAudioTracks().forEach((pista) => {
-            conexion.addTrack(pista, flujoAudio);
-        });
-    }
+                conexion.addTransceiver("video", {
+                    direction: "sendrecv"
+                });
 
-    if (flujoCamara) {
-        flujoCamara.getVideoTracks().forEach((pista) => {
-            conexion.addTrack(pista, flujoCamara);
-        });
-    }
+            }
 
-}
+            // ======================================
+            // RECIBIR PISTAS REMOTAS
+            // ======================================
 
-// ==========================================
-// INICIAR CONEXIÓN COMO EMISOR
-// ==========================================
+            conexion.ontrack = (evento) => {
 
-async function iniciarConexionComoEmisor(idParticipante) {
+                const video = obtenerVideoRemoto(
+                    idParticipante
+                );
 
-    try {
+                if (!video) return;
 
-        const conexion = crearConexionWebRTC(idParticipante);
+                if (
+                    evento.streams &&
+                    evento.streams.length > 0
+                ) {
 
-        // Compartir las pistas disponibles
-        agregarPistasAConexion(conexion);
+                    video.srcObject = evento.streams[0];
 
-        // Enviar candidatos ICE al participante
-        conexion.onicecandidate = (evento) => {
+                } else {
 
-            if (evento.candidate) {
+                    if (!video.srcObject) {
+
+                        video.srcObject = new MediaStream();
+
+                    }
+
+                    const existePista = video.srcObject
+                        .getTracks()
+                        .some(
+                            pista => pista.id === evento.track.id
+                        );
+
+                    if (!existePista) {
+
+                        video.srcObject.addTrack(
+                            evento.track
+                        );
+
+                    }
+
+                }
+
+                video.play().catch(error => {
+
+                    console.warn(
+                        "No se pudo reproducir el video remoto:",
+                        error
+                    );
+
+                });
+
+                actualizarNombreParticipante(
+                    idParticipante
+                );
+
+            };
+
+            // ======================================
+            // ENVIAR CANDIDATOS ICE
+            // ======================================
+
+            conexion.onicecandidate = (evento) => {
+
+                if (!evento.candidate) return;
+
+                if (!perteneceALaSala()) return;
 
                 socketVideo.emit("candidato-ice", {
                     sala: salaVideo,
@@ -187,747 +298,1414 @@ async function iniciarConexionComoEmisor(idParticipante) {
                     candidato: evento.candidate
                 });
 
-            }
+            };
 
-        };
+            // ======================================
+            // ESTADO DE CONEXIÓN
+            // ======================================
 
-        // Crear oferta
-        const oferta = await conexion.createOffer();
+            conexion.onconnectionstatechange = () => {
 
-        await conexion.setLocalDescription(oferta);
+                console.log(
+                    `[WEBRTC] ${idParticipante}:`,
+                    conexion.connectionState
+                );
 
-        // Enviar oferta al otro participante
-        socketVideo.emit("oferta-webrtc", {
-            sala: salaVideo,
-            destino: idParticipante,
-            oferta: conexion.localDescription
-        });
+                if (
+                    conexion.connectionState === "failed"
+                ) {
 
-        console.log(
-            "Oferta WebRTC enviada a:",
-            idParticipante
-        );
+                    console.warn(
+                        "La conexión WebRTC falló con:",
+                        idParticipante
+                    );
 
-    } catch (error) {
+                }
 
-        console.error(
-            "Error al iniciar conexión WebRTC:",
-            error
-        );
+            };
 
-    }
+            // ======================================
+            // ESTADO ICE
+            // ======================================
 
-}
+            conexion.oniceconnectionstatechange = () => {
 
-// ==========================================
-// RECIBIR OFERTA WEBRTC
-// ==========================================
+                console.log(
+                    `[ICE] ${idParticipante}:`,
+                    conexion.iceConnectionState
+                );
 
-socketVideo.on("oferta-webrtc", async (datos) => {
+            };
 
-    try {
-
-        if (!datos || !datos.emisor || !datos.oferta) return;
-
-        const idParticipante = datos.emisor;
-
-        const conexion = crearConexionWebRTC(idParticipante);
-
-        // Compartir las pistas locales disponibles
-        agregarPistasAConexion(conexion);
-
-        // Preparar candidatos ICE
-        conexion.onicecandidate = (evento) => {
-
-            if (evento.candidate) {
-
-                socketVideo.emit("candidato-ice", {
-                    sala: salaVideo,
-                    destino: idParticipante,
-                    candidato: evento.candidate
-                });
-
-            }
-
-        };
-
-        // Registrar la oferta recibida
-        await conexion.setRemoteDescription(
-            new RTCSessionDescription(datos.oferta)
-        );
-
-        // Procesar candidatos ICE pendientes
-        const candidatos = candidatosPendientes.get(idParticipante) || [];
-
-        for (const candidato of candidatos) {
-            await conexion.addIceCandidate(
-                new RTCIceCandidate(candidato)
+            conexionesWebRTC.set(
+                idParticipante,
+                conexion
             );
+
+            console.log(
+                "Conexión WebRTC creada para:",
+                idParticipante
+            );
+
+            return conexion;
+
         }
 
-        candidatosPendientes.delete(idParticipante);
+        // ==========================================
+        // ACTUALIZAR UNA PISTA LOCAL
+        // ==========================================
 
-        // Crear respuesta
-        const respuesta = await conexion.createAnswer();
+        async function actualizarPistaLocal(
+            conexion,
+            tipo,
+            pista
+        ) {
 
-        await conexion.setLocalDescription(respuesta);
-
-        // Enviar respuesta al emisor
-        socketVideo.emit("respuesta-webrtc", {
-            sala: salaVideo,
-            destino: idParticipante,
-            respuesta: conexion.localDescription
-        });
-
-        console.log(
-            "Respuesta WebRTC enviada a:",
-            idParticipante
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Error al recibir oferta WebRTC:",
-            error
-        );
-
-    }
-
-});
-
-// ==========================================
-// RECIBIR RESPUESTA WEBRTC
-// ==========================================
-
-socketVideo.on("respuesta-webrtc", async (datos) => {
-
-    try {
-
-        if (!datos || !datos.emisor || !datos.respuesta) return;
-
-        const conexion = conexionesWebRTC.get(datos.emisor);
-
-        if (!conexion) {
-            console.warn(
-                "No existe conexión con:",
-                datos.emisor
+            const transceptor = obtenerTransceptor(
+                conexion,
+                tipo
             );
-            return;
-        }
 
-        // Registrar la respuesta del participante
-        await conexion.setRemoteDescription(
-            new RTCSessionDescription(datos.respuesta)
-        );
+            if (!transceptor) {
 
-        console.log(
-            "Respuesta WebRTC recibida de:",
-            datos.emisor
-        );
+                console.warn(
+                    `No se encontró el transceptor ${tipo}.`
+                );
 
-    } catch (error) {
+                return;
 
-        console.error(
-            "Error al recibir respuesta WebRTC:",
-            error
-        );
-
-    }
-
-});
-
-// ==========================================
-// RECIBIR CANDIDATOS ICE
-// ==========================================
-
-socketVideo.on("candidato-ice", async (datos) => {
-
-    try {
-
-        if (!datos || !datos.emisor || !datos.candidato) return;
-
-        const idParticipante = datos.emisor;
-
-        const conexion = conexionesWebRTC.get(idParticipante);
-
-        // Si todavía no existe la conexión o no tiene
-        // descripción remota, guardar el candidato.
-        if (!conexion || !conexion.remoteDescription) {
-
-            if (!candidatosPendientes.has(idParticipante)) {
-                candidatosPendientes.set(idParticipante, []);
             }
 
-            candidatosPendientes.get(idParticipante).push(
-                datos.candidato
+            await transceptor.sender.replaceTrack(
+                pista || null
             );
 
-            return;
         }
 
-        await conexion.addIceCandidate(
-            new RTCIceCandidate(datos.candidato)
-        );
+        // ==========================================
+        // AGREGAR PISTAS A UNA CONEXIÓN
+        // ==========================================
 
-        console.log(
-            "Candidato ICE recibido de:",
-            idParticipante
-        );
+        async function agregarPistasAConexion(conexion) {
 
-    } catch (error) {
-
-        console.error(
-            "Error al recibir candidato ICE:",
-            error
-        );
-
-    }
-
-});
-
-
-// Cuando entra un nuevo participante
-socketVideo.on("usuario-unido", (participante) => {
-
-    if (!participante || participante.id === socketVideo.id) return;
-
-    participantesVideo.set(
-        participante.id,
-        participante.nombre
-    );
-
-    console.log(
-        "Nuevo participante:",
-        participante.nombre
-    );
-
-});
-
-
-// Cuando un participante sale de la sala
-function eliminarParticipante(idParticipante) {
-
-    participantesVideo.delete(idParticipante);
-
-    // Eliminar el video del participante que salió
-    const tarjetaVideo = document.getElementById(`participante-video-${idParticipante}`);
-
-    if (tarjetaVideo) {
-        tarjetaVideo.remove();
-    }
-
-    const conexion = conexionesWebRTC.get(idParticipante);
-    candidatosPendientes.delete(idParticipante);
-
-    if (conexion) {
-        conexion.close();
-        conexionesWebRTC.delete(idParticipante);
-    }
-
-    console.log(
-        "Participante eliminado:",
-        idParticipante
-    );
-
-}
-
-
-// Escuchar salida voluntaria
-socketVideo.on("usuario-salio", (participante) => {
-
-    if (participante && participante.id) {
-        eliminarParticipante(participante.id);
-    }
-
-});
-
-
-// Escuchar desconexiones
-socketVideo.on("usuario-desconectado", (participante) => {
-
-    if (participante && participante.id) {
-        eliminarParticipante(participante.id);
-    }
-
-});
-
-
-let contextoAudio = null;
-let analizador = null;
-let fuenteAudio = null;
-let datosAudio = null;
-let animacionAudio = null;
-
-if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-
-    console.error("El navegador no permite acceder a los dispositivos.");
-
-    if (estadoMicrofono) {
-        estadoMicrofono.textContent = "Dispositivos no disponibles";
-    }
-
-} else {
-
-    // ==========================================
-    // BUSCAR MICRÓFONOS DISPONIBLES
-    // ==========================================
-
-    async function comprobarMicrofonos() {
-
-        try {
-
-            const dispositivos = await navigator.mediaDevices.enumerateDevices();
-
-            const microfonos = dispositivos.filter(
-                dispositivo => dispositivo.kind === "audioinput"
+            await actualizarPistaLocal(
+                conexion,
+                "audio",
+                pistaAudio
             );
 
-            if (!selectorMicrofono) return;
+            await actualizarPistaLocal(
+                conexion,
+                "video",
+                pistaVideo
+            );
 
-            const seleccionAnterior = selectorMicrofono.value;
+        }
 
-            selectorMicrofono.innerHTML = "";
+        // ==========================================
+        // ACTUALIZAR PISTAS EN TODAS LAS CONEXIONES
+        // ==========================================
 
-            if (microfonos.length === 0) {
+        async function actualizarPistasEnTodasLasConexiones() {
 
-                selectorMicrofono.innerHTML =
-                    '<option value="">No se encontraron micrófonos</option>';
+            const tareas = [];
 
-                console.warn("No se encontraron micrófonos.");
+            for (const conexion of conexionesWebRTC.values()) {
 
+                tareas.push(
+                    agregarPistasAConexion(conexion)
+                );
+
+            }
+
+            const resultados = await Promise.allSettled(
+                tareas
+            );
+
+            resultados.forEach(resultado => {
+
+                if (resultado.status === "rejected") {
+
+                    console.error(
+                        "Error al actualizar una pista:",
+                        resultado.reason
+                    );
+
+                }
+
+            });
+
+        }
+
+        // ==========================================
+        // PROCESAR CANDIDATOS ICE PENDIENTES
+        // ==========================================
+
+        async function procesarCandidatosPendientes(
+            idParticipante
+        ) {
+
+            const conexion = conexionesWebRTC.get(
+                idParticipante
+            );
+
+            if (
+                !conexion ||
+                !conexion.remoteDescription
+            ) {
                 return;
             }
 
-            microfonos.forEach((microfono, indice) => {
+            const candidatos =
+                candidatosPendientes.get(idParticipante) || [];
 
-                const opcion = document.createElement("option");
+            for (const candidato of candidatos) {
 
-                opcion.value = microfono.deviceId;
+                try {
 
-                opcion.textContent =
-                    microfono.label || `Micrófono ${indice + 1}`;
+                    await conexion.addIceCandidate(
+                        new RTCIceCandidate(candidato)
+                    );
 
-                selectorMicrofono.appendChild(opcion);
+                } catch (error) {
 
-            });
+                    console.error(
+                        "Error al procesar candidato ICE:",
+                        error
+                    );
 
-            // Conservar el dispositivo seleccionado si sigue disponible
-            const existeAnterior = microfonos.some(
-                microfono => microfono.deviceId === seleccionAnterior
-            );
-
-            if (existeAnterior) {
-                selectorMicrofono.value = seleccionAnterior;
-            } else if (microfonoSeleccionado &&
-                microfonos.some(m => m.deviceId === microfonoSeleccionado)) {
-
-                selectorMicrofono.value = microfonoSeleccionado;
+                }
 
             }
 
-            microfonoSeleccionado = selectorMicrofono.value;
-
-            console.log("Micrófonos encontrados:", microfonos);
-
-        } catch (error) {
-
-            console.error("Error al buscar micrófonos:", error);
+            candidatosPendientes.delete(
+                idParticipante
+            );
 
         }
-    }
 
-    // ==========================================
-    // SOLICITAR PERMISO PARA MOSTRAR LOS MICRÓFONOS
-    // ==========================================
+        // ==========================================
+        // INICIAR CONEXIÓN COMO EMISOR
+        // ==========================================
 
-    async function iniciarDispositivo() {
+        async function iniciarConexionComoEmisor(
+            idParticipante
+        ) {
 
-        try {
+            if (
+                !perteneceALaSala() ||
+                !participantesVideo.has(idParticipante) ||
+                ofertasEnProceso.has(idParticipante) ||
+                conexionesWebRTC.has(idParticipante)
+            ) {
+                return;
+            }
 
-            // Solicitamos únicamente el micrófono.
-            // No necesitamos cámara para detectar los dispositivos de audio.
+            // Solo el ID menor puede iniciar la oferta.
 
-            const permiso = await navigator.mediaDevices.getUserMedia({
-                audio: true,
-                video: false
-            });
+            if (
+                socketVideo.id.localeCompare(idParticipante) >= 0
+            ) {
+                return;
+            }
 
-            // Liberamos el flujo temporal.
-            permiso.getTracks().forEach(pista => pista.stop());
+            ofertasEnProceso.add(idParticipante);
 
-            console.log("Permiso de micrófono concedido.");
+            try {
 
-            await comprobarMicrofonos();
+                const conexion = crearConexionWebRTC(
+                    idParticipante,
+                    true
+                );
 
-        } catch (error) {
+                await agregarPistasAConexion(
+                    conexion
+                );
 
-            console.error("No se pudo acceder al micrófono:", error);
+                const oferta = await conexion.createOffer();
 
-            if (selectorMicrofono) {
+                await conexion.setLocalDescription(
+                    oferta
+                );
 
-                selectorMicrofono.innerHTML =
-                    '<option value="">Permiso de micrófono denegado</option>';
+                if (!perteneceALaSala()) return;
+
+                socketVideo.emit("oferta-webrtc", {
+                    sala: salaVideo,
+                    destino: idParticipante,
+                    oferta: conexion.localDescription
+                });
+
+                console.log(
+                    "Oferta WebRTC enviada a:",
+                    idParticipante
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Error al iniciar conexión WebRTC:",
+                    error
+                );
+
+                eliminarParticipante(idParticipante);
+
+            } finally {
+
+                ofertasEnProceso.delete(
+                    idParticipante
+                );
+
+            }
+
+        }
+
+        // ==========================================
+        // RECIBIR OFERTA WEBRTC
+        // ==========================================
+
+        socketVideo.on("oferta-webrtc", async (datos) => {
+
+            if (
+                !datos ||
+                !datos.emisor ||
+                !datos.oferta ||
+                !perteneceALaSala()
+            ) {
+                return;
+            }
+
+            const idParticipante = datos.emisor;
+
+            // Evitar negociaciones duplicadas.
+
+            if (respuestasEnProceso.has(idParticipante)) {
+                return;
+            }
+
+            respuestasEnProceso.add(
+                idParticipante
+            );
+
+            try {
+
+                // El receptor NO crea transceptores.
+                // La oferta remota proporciona los canales.
+
+                const conexion = crearConexionWebRTC(
+                    idParticipante,
+                    false
+                );
+
+                if (
+                    conexion.signalingState !== "stable"
+                ) {
+
+                    console.warn(
+                        "No se puede procesar la oferta. Estado:",
+                        conexion.signalingState
+                    );
+
+                    return;
+
+                }
+
+                await conexion.setRemoteDescription(
+                    new RTCSessionDescription(
+                        datos.oferta
+                    )
+                );
+
+                // Ahora existen los transceptores recibidos
+                // en la descripción remota.
+
+                await agregarPistasAConexion(
+                    conexion
+                );
+
+                await procesarCandidatosPendientes(
+                    idParticipante
+                );
+
+                const respuesta = await conexion.createAnswer();
+
+                await conexion.setLocalDescription(
+                    respuesta
+                );
+
+                if (!perteneceALaSala()) return;
+
+                socketVideo.emit("respuesta-webrtc", {
+                    sala: salaVideo,
+                    destino: idParticipante,
+                    respuesta: conexion.localDescription
+                });
+
+                console.log(
+                    "Respuesta WebRTC enviada a:",
+                    idParticipante
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Error al recibir oferta WebRTC:",
+                    error
+                );
+
+                eliminarParticipante(
+                    idParticipante
+                );
+
+            } finally {
+
+                respuestasEnProceso.delete(
+                    idParticipante
+                );
+
+            }
+
+        });
+
+        // ==========================================
+        // RECIBIR RESPUESTA WEBRTC
+        // ==========================================
+
+        socketVideo.on("respuesta-webrtc", async (datos) => {
+
+            if (
+                !datos ||
+                !datos.emisor ||
+                !datos.respuesta
+            ) {
+                return;
+            }
+
+            const idParticipante = datos.emisor;
+
+            const conexion = conexionesWebRTC.get(
+                idParticipante
+            );
+
+            if (!conexion) {
+
+                console.warn(
+                    "No existe conexión con:",
+                    idParticipante
+                );
+
+                return;
+
+            }
+
+            if (
+                conexion.signalingState !== "have-local-offer"
+            ) {
+
+                console.warn(
+                    "Respuesta recibida en un estado inesperado:",
+                    conexion.signalingState
+                );
+
+                return;
+
+            }
+
+            if (
+                respuestasEnProceso.has(idParticipante)
+            ) {
+                return;
+            }
+
+            respuestasEnProceso.add(
+                idParticipante
+            );
+
+            try {
+
+                await conexion.setRemoteDescription(
+                    new RTCSessionDescription(
+                        datos.respuesta
+                    )
+                );
+
+                await procesarCandidatosPendientes(
+                    idParticipante
+                );
+
+                console.log(
+                    "Respuesta WebRTC recibida de:",
+                    idParticipante
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Error al recibir respuesta WebRTC:",
+                    error
+                );
+
+            } finally {
+
+                respuestasEnProceso.delete(
+                    idParticipante
+                );
+
+            }
+
+        });
+
+        // ==========================================
+        // RECIBIR CANDIDATOS ICE
+        // ==========================================
+
+        socketVideo.on("candidato-ice", async (datos) => {
+
+            if (
+                !datos ||
+                !datos.emisor ||
+                !datos.candidato
+            ) {
+                return;
+            }
+
+            const idParticipante = datos.emisor;
+
+            const conexion = conexionesWebRTC.get(
+                idParticipante
+            );
+
+            // Si todavía no existe la conexión o no se
+            // recibió la descripción remota, guardar ICE.
+
+            if (
+                !conexion ||
+                !conexion.remoteDescription
+            ) {
+
+                if (
+                    !candidatosPendientes.has(
+                        idParticipante
+                    )
+                ) {
+
+                    candidatosPendientes.set(
+                        idParticipante,
+                        []
+                    );
+
+                }
+
+                const lista = candidatosPendientes.get(
+                    idParticipante
+                );
+
+                // Evitar acumulación excesiva.
+
+                if (lista.length < 200) {
+
+                    lista.push(datos.candidato);
+
+                }
+
+                return;
+
+            }
+
+            try {
+
+                await conexion.addIceCandidate(
+                    new RTCIceCandidate(
+                        datos.candidato
+                    )
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Error al recibir candidato ICE:",
+                    error
+                );
+
+            }
+
+        });
+
+        // ==========================================
+        // ACTUALIZAR LISTA DE PARTICIPANTES
+        // ==========================================
+
+        socketVideo.on(
+            "lista-participantes",
+            (participantes) => {
+
+                if (!Array.isArray(participantes)) {
+                    return;
+                }
+
+                participantesVideo.clear();
+
+                const idsActuales = new Set();
+
+                participantes.forEach((participante) => {
+
+                    if (
+                        !participante ||
+                        typeof participante.id !== "string" ||
+                        participante.id === socketVideo.id
+                    ) {
+                        return;
+                    }
+
+                    idsActuales.add(
+                        participante.id
+                    );
+
+                    participantesVideo.set(
+                        participante.id,
+                        participante.nombre || "Participante"
+                    );
+
+                });
+
+                // Actualizar nombres de videos existentes.
+
+                participantesVideo.forEach((nombre, id) => {
+
+                    actualizarNombreParticipante(id);
+
+                });
+
+                // Eliminar participantes que ya no están
+                // en la sala.
+
+                for (const id of conexionesWebRTC.keys()) {
+
+                    if (!idsActuales.has(id)) {
+
+                        eliminarParticipante(id);
+
+                    }
+
+                }
+
+                // El participante con ID menor inicia
+                // la conexión WebRTC.
+
+                participantesVideo.forEach((nombre, id) => {
+
+                    if (
+                        socketVideo.id.localeCompare(id) < 0
+                    ) {
+
+                        iniciarConexionComoEmisor(id);
+
+                    }
+
+                });
+
+                console.log(
+                    "Participantes disponibles:",
+                    Array.from(participantesVideo.entries())
+                );
+
+            }
+        );
+
+        // ==========================================
+        // NUEVO PARTICIPANTE
+        // ==========================================
+
+        socketVideo.on(
+            "usuario-unido",
+            (participante) => {
+
+                if (
+                    !participante ||
+                    typeof participante.id !== "string" ||
+                    participante.id === socketVideo.id
+                ) {
+                    return;
+                }
+
+                participantesVideo.set(
+                    participante.id,
+                    participante.nombre || "Participante"
+                );
+
+                actualizarNombreParticipante(
+                    participante.id
+                );
+
+                console.log(
+                    "Nuevo participante:",
+                    participante.nombre
+                );
+
+            }
+        );
+
+        // ==========================================
+        // ELIMINAR PARTICIPANTE
+        // ==========================================
+
+        function eliminarParticipante(idParticipante) {
+
+            participantesVideo.delete(
+                idParticipante
+            );
+
+            candidatosPendientes.delete(
+                idParticipante
+            );
+
+            ofertasEnProceso.delete(
+                idParticipante
+            );
+
+            respuestasEnProceso.delete(
+                idParticipante
+            );
+
+            const tarjetaVideo = document.getElementById(
+                `participante-video-${idParticipante}`
+            );
+
+            if (tarjetaVideo) {
+
+                const video = tarjetaVideo.querySelector("video");
+
+                if (video) {
+                    video.srcObject = null;
+                }
+
+                tarjetaVideo.remove();
+
+            }
+
+            const conexion = conexionesWebRTC.get(
+                idParticipante
+            );
+
+            if (conexion) {
+
+                conexion.ontrack = null;
+                conexion.onicecandidate = null;
+                conexion.onconnectionstatechange = null;
+                conexion.oniceconnectionstatechange = null;
+
+                conexion.close();
+
+                conexionesWebRTC.delete(
+                    idParticipante
+                );
+
+            }
+
+            console.log(
+                "Participante eliminado:",
+                idParticipante
+            );
+
+        }
+
+        // ==========================================
+        // SALIDA VOLUNTARIA
+        // ==========================================
+
+        socketVideo.on(
+            "usuario-salio",
+            (participante) => {
+
+                if (
+                    participante &&
+                    participante.id
+                ) {
+
+                    eliminarParticipante(
+                        participante.id
+                    );
+
+                }
+
+            }
+        );
+
+        // ==========================================
+        // DESCONEXIÓN DE PARTICIPANTE
+        // ==========================================
+
+        socketVideo.on(
+            "usuario-desconectado",
+            (participante) => {
+
+                if (
+                    participante &&
+                    participante.id
+                ) {
+
+                    eliminarParticipante(
+                        participante.id
+                    );
+
+                }
+
+            }
+        );
+
+        // ==========================================
+        // BUSCAR MICRÓFONOS
+        // ==========================================
+
+        async function comprobarMicrofonos() {
+
+            if (!navigator.mediaDevices) return;
+
+            try {
+
+                const dispositivos =
+                    await navigator.mediaDevices.enumerateDevices();
+
+                const microfonos = dispositivos.filter(
+                    dispositivo =>
+                        dispositivo.kind === "audioinput"
+                );
+
+                if (!selectorMicrofono) return;
+
+                const seleccionAnterior =
+                    microfonoSeleccionado;
+
+                selectorMicrofono.innerHTML = "";
+
+                if (microfonos.length === 0) {
+
+                    const opcion = document.createElement("option");
+
+                    opcion.value = "";
+                    opcion.textContent =
+                        "No se encontraron micrófonos";
+
+                    selectorMicrofono.appendChild(opcion);
+
+                    microfonoSeleccionado = "";
+
+                    return;
+
+                }
+
+                microfonos.forEach((microfono, indice) => {
+
+                    const opcion = document.createElement("option");
+
+                    opcion.value = microfono.deviceId;
+
+                    opcion.textContent =
+                        microfono.label ||
+                        `Micrófono ${indice + 1}`;
+
+                    selectorMicrofono.appendChild(
+                        opcion
+                    );
+
+                });
+
+                const existeAnterior = microfonos.some(
+                    microfono =>
+                        microfono.deviceId === seleccionAnterior
+                );
+
+                if (existeAnterior) {
+
+                    selectorMicrofono.value =
+                        seleccionAnterior;
+
+                } else {
+
+                    microfonoSeleccionado =
+                        microfonos[0].deviceId;
+
+                    selectorMicrofono.value =
+                        microfonoSeleccionado;
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Error al buscar micrófonos:",
+                    error
+                );
+
+            }
+
+        }
+
+        // ==========================================
+        // INICIAR INDICADOR DE AUDIO
+        // ==========================================
+
+        async function iniciarIndicadorAudio() {
+
+            try {
+
+                if (!flujoAudio) return;
+
+                detenerIndicadorAudio();
+
+                const ConstructorAudioContext =
+                    window.AudioContext ||
+                    window.webkitAudioContext;
+
+                if (!ConstructorAudioContext) return;
+
+                contextoAudio = new ConstructorAudioContext();
+
+                if (contextoAudio.state === "suspended") {
+
+                    await contextoAudio.resume();
+
+                }
+
+                analizador = contextoAudio.createAnalyser();
+
+                fuenteAudio =
+                    contextoAudio.createMediaStreamSource(
+                        flujoAudio
+                    );
+
+                analizador.fftSize = 256;
+
+                datosAudio = new Uint8Array(
+                    analizador.frequencyBinCount
+                );
+
+                fuenteAudio.connect(analizador);
+
+                function actualizarNivel() {
+
+                    if (!analizador || !datosAudio) {
+                        return;
+                    }
+
+                    analizador.getByteFrequencyData(
+                        datosAudio
+                    );
+
+                    const promedio = datosAudio.reduce(
+                        (suma, valor) => suma + valor,
+                        0
+                    ) / datosAudio.length;
+
+                    const porcentaje = Math.min(
+                        100,
+                        promedio
+                    );
+
+                    if (nivelAudio) {
+
+                        nivelAudio.style.width =
+                            porcentaje + "%";
+
+                    }
+
+                    animacionAudio = requestAnimationFrame(
+                        actualizarNivel
+                    );
+
+                }
+
+                actualizarNivel();
+
+            } catch (error) {
+
+                console.error(
+                    "Error en el indicador de audio:",
+                    error
+                );
+
+            }
+
+        }
+
+        // ==========================================
+        // DETENER INDICADOR DE AUDIO
+        // ==========================================
+
+        function detenerIndicadorAudio() {
+
+            if (animacionAudio) {
+
+                cancelAnimationFrame(
+                    animacionAudio
+                );
+
+                animacionAudio = null;
+
+            }
+
+            if (fuenteAudio) {
+
+                fuenteAudio.disconnect();
+
+                fuenteAudio = null;
+
+            }
+
+            if (contextoAudio) {
+
+                contextoAudio.close().catch(console.error);
+
+                contextoAudio = null;
+
+            }
+
+            analizador = null;
+            datosAudio = null;
+
+            if (nivelAudio) {
+
+                nivelAudio.style.width = "0%";
+
+            }
+
+        }
+
+        // ==========================================
+        // ACTIVAR MICRÓFONO
+        // ==========================================
+
+        async function activarMicrofono() {
+
+            try {
+
+                if (flujoAudio) return;
+
+                if (!navigator.mediaDevices?.getUserMedia) {
+
+                    throw new Error(
+                        "El navegador no permite acceder al micrófono."
+                    );
+
+                }
+
+                const restricciones = microfonoSeleccionado
+                    ? {
+                        audio: {
+                            deviceId: {
+                                exact: microfonoSeleccionado
+                            }
+                        },
+                        video: false
+                    }
+                    : {
+                        audio: true,
+                        video: false
+                    };
+
+                flujoAudio =
+                    await navigator.mediaDevices.getUserMedia(
+                        restricciones
+                    );
+
+                pistaAudio = flujoAudio.getAudioTracks()[0];
+
+                if (!pistaAudio) {
+
+                    throw new Error(
+                        "No se pudo obtener la pista de audio."
+                    );
+
+                }
+
+                pistaAudio.enabled = true;
+
+                await actualizarPistasEnTodasLasConexiones();
+
+                if (btnMicrofono) {
+
+                    btnMicrofono.textContent =
+                        "Desactivar micrófono";
+
+                }
+
+                if (estadoMicrofono) {
+
+                    estadoMicrofono.textContent =
+                        "Micrófono encendido";
+
+                    estadoMicrofono.style.color =
+                        "#35d07f";
+
+                }
+
+                await comprobarMicrofonos();
+
+                await iniciarIndicadorAudio();
+
+                console.log("Micrófono activado.");
+
+            } catch (error) {
+
+                console.error(
+                    "Error al activar el micrófono:",
+                    error
+                );
+
+                if (flujoAudio) {
+
+                    flujoAudio.getTracks().forEach(
+                        pista => pista.stop()
+                    );
+
+                }
+
+                flujoAudio = null;
+                pistaAudio = null;
+
+                alert(
+                    "No se pudo activar el micrófono. Revisá los permisos y el dispositivo seleccionado."
+                );
+
+            }
+
+        }
+
+        // ==========================================
+        // DESACTIVAR MICRÓFONO
+        // ==========================================
+
+        async function desactivarMicrofono() {
+
+            if (flujoAudio) {
+
+                flujoAudio.getTracks().forEach(
+                    pista => pista.stop()
+                );
+
+                flujoAudio = null;
+                pistaAudio = null;
+
+            }
+
+            detenerIndicadorAudio();
+
+            await actualizarPistasEnTodasLasConexiones();
+
+            if (btnMicrofono) {
+
+                btnMicrofono.textContent =
+                    "Activar micrófono";
 
             }
 
             if (estadoMicrofono) {
-                estadoMicrofono.textContent = "Permiso de micrófono requerido";
+
+                estadoMicrofono.textContent =
+                    "Micrófono apagado";
+
+                estadoMicrofono.style.color =
+                    "#f87171";
+
             }
+
+            console.log("Micrófono desactivado.");
+
         }
-    }
 
-    // ==========================================
-    // ACTIVAR MICRÓFONO
-    // ==========================================
+        // ==========================================
+        // ACTIVAR CÁMARA
+        // ==========================================
 
-    async function activarMicrofono() {
+        async function activarCamara() {
 
-        try {
+            try {
 
-            if (flujoAudio) return;
+                if (flujoCamara) return;
 
-            const restricciones = microfonoSeleccionado
-                ? {
-                    audio: {
-                        deviceId: {
-                            exact: microfonoSeleccionado
-                        }
-                    },
-                    video: false
+                if (!navigator.mediaDevices?.getUserMedia) {
+
+                    throw new Error(
+                        "El navegador no permite acceder a la cámara."
+                    );
+
                 }
-                : {
-                    audio: true,
-                    video: false
-                };
 
-            flujoAudio = await navigator.mediaDevices.getUserMedia(
-                restricciones
-            );
+                flujoCamara =
+                    await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: false
+                    });
 
-            pistaAudio = flujoAudio.getAudioTracks()[0];
+                pistaVideo = flujoCamara.getVideoTracks()[0];
 
-            pistaAudio.enabled = true;
+                if (!pistaVideo) {
 
-            btnMicrofono.textContent = "Desactivar micrófono";
+                    throw new Error(
+                        "No se pudo obtener la pista de video."
+                    );
 
-            estadoMicrofono.textContent = "Micrófono encendido";
+                }
 
-            estadoMicrofono.style.color = "#35d07f";
+                if (videoLocal) {
 
-            iniciarIndicadorAudio();
+                    videoLocal.srcObject = flujoCamara;
 
-            console.log("Micrófono activado.");
+                    videoLocal.play().catch(console.warn);
 
-        } catch (error) {
+                }
 
-            console.error("Error al activar el micrófono:", error);
+                await actualizarPistasEnTodasLasConexiones();
 
-            alert(
-                "No se pudo activar el micrófono. Revisá los permisos y el dispositivo seleccionado."
-            );
+                if (btnCamara) {
 
-        }
-    }
+                    btnCamara.textContent =
+                        "Desactivar cámara";
 
-    // ==========================================
-    // DESACTIVAR MICRÓFONO
-    // ==========================================
+                }
 
-    function desactivarMicrofono() {
+                console.log("Cámara activada.");
 
-        if (flujoAudio) {
+            } catch (error) {
 
-            flujoAudio.getTracks().forEach(pista => pista.stop());
+                console.error(
+                    "Error al activar la cámara:",
+                    error
+                );
 
-            flujoAudio = null;
-            pistaAudio = null;
+                if (flujoCamara) {
 
-        }
+                    flujoCamara.getTracks().forEach(
+                        pista => pista.stop()
+                    );
 
-        detenerIndicadorAudio();
+                }
 
-        btnMicrofono.textContent = "Activar micrófono";
+                flujoCamara = null;
+                pistaVideo = null;
 
-        estadoMicrofono.textContent = "Micrófono apagado";
-
-        estadoMicrofono.style.color = "#f87171";
-
-        console.log("Micrófono desactivado.");
-    }
-
-    // ==========================================
-    // BOTÓN DEL MICRÓFONO
-    // ==========================================
-
-    if (btnMicrofono) {
-
-        btnMicrofono.addEventListener("click", async () => {
-
-            if (flujoAudio) {
-                desactivarMicrofono();
-            } else {
-                await activarMicrofono();
-            }
-
-        });
-
-    }
-
-    // ==========================================
-    // CAMBIAR MICRÓFONO
-    // ==========================================
-
-    if (selectorMicrofono) {
-
-        selectorMicrofono.addEventListener("change", async () => {
-
-            microfonoSeleccionado = selectorMicrofono.value;
-
-            console.log(
-                "Micrófono seleccionado:",
-                microfonoSeleccionado
-            );
-
-            // Si el micrófono ya está encendido,
-            // cambiamos al nuevo dispositivo.
-
-            if (flujoAudio) {
-
-                desactivarMicrofono();
-
-                await activarMicrofono();
+                alert(
+                    "No se pudo activar la cámara. Revisá los permisos y el dispositivo."
+                );
 
             }
 
-        });
-
-    }
-
-    // ==========================================
-    // ACTIVAR CÁMARA
-    // ==========================================
-
-    async function activarCamara() {
-
-        try {
-
-            if (flujoCamara) return;
-
-            flujoCamara = await navigator.mediaDevices.getUserMedia({
-                video: true,
-                audio: false
-            });
-
-            pistaVideo = flujoCamara.getVideoTracks()[0];
-
-            if (videoLocal) {
-                videoLocal.srcObject = flujoCamara;
-            }
-
-            btnCamara.textContent = "Desactivar cámara";
-
-            console.log("Cámara activada.");
-
-        } catch (error) {
-
-            console.error("Error al activar la cámara:", error);
-
-            alert(
-                "No se pudo activar la cámara. Revisá los permisos y el dispositivo."
-            );
-
-        }
-    }
-
-    // ==========================================
-    // DESACTIVAR CÁMARA
-    // ==========================================
-
-    function desactivarCamara() {
-
-        if (flujoCamara) {
-
-            flujoCamara.getTracks().forEach(pista => pista.stop());
-
-            flujoCamara = null;
-            pistaVideo = null;
-
         }
 
-        if (videoLocal) {
-            videoLocal.srcObject = null;
-        }
+        // ==========================================
+        // DESACTIVAR CÁMARA
+        // ==========================================
 
-        btnCamara.textContent = "Activar cámara";
-
-        console.log("Cámara desactivada.");
-
-    }
-
-    // ==========================================
-    // BOTÓN DE CÁMARA
-    // ==========================================
-
-    if (btnCamara) {
-
-        btnCamara.addEventListener("click", async () => {
+        async function desactivarCamara() {
 
             if (flujoCamara) {
-                desactivarCamara();
-            } else {
-                await activarCamara();
+
+                flujoCamara.getTracks().forEach(
+                    pista => pista.stop()
+                );
+
+                flujoCamara = null;
+                pistaVideo = null;
+
             }
+
+            if (videoLocal) {
+
+                videoLocal.srcObject = null;
+
+            }
+
+            await actualizarPistasEnTodasLasConexiones();
+
+            if (btnCamara) {
+
+                btnCamara.textContent =
+                    "Activar cámara";
+
+            }
+
+            console.log("Cámara desactivada.");
+
+        }
+
+        // ==========================================
+        // BOTÓN DEL MICRÓFONO
+        // ==========================================
+
+        if (btnMicrofono) {
+
+            btnMicrofono.addEventListener(
+                "click",
+                async () => {
+
+                    if (flujoAudio) {
+
+                        await desactivarMicrofono();
+
+                    } else {
+
+                        await activarMicrofono();
+
+                    }
+
+                }
+            );
+
+        }
+
+        // ==========================================
+        // CAMBIAR MICRÓFONO
+        // ==========================================
+
+        if (selectorMicrofono) {
+
+            selectorMicrofono.addEventListener(
+                "change",
+                async () => {
+
+                    microfonoSeleccionado =
+                        selectorMicrofono.value;
+
+                    if (flujoAudio) {
+
+                        await desactivarMicrofono();
+
+                        await activarMicrofono();
+
+                    }
+
+                }
+            );
+
+        }
+
+        // ==========================================
+        // BOTÓN DE CÁMARA
+        // ==========================================
+
+        if (btnCamara) {
+
+            btnCamara.addEventListener(
+                "click",
+                async () => {
+
+                    if (flujoCamara) {
+
+                        await desactivarCamara();
+
+                    } else {
+
+                        await activarCamara();
+
+                    }
+
+                }
+            );
+
+        }
+
+        // ==========================================
+        // SALIR DE LA LLAMADA
+        // ==========================================
+
+        async function salirDeLlamada() {
+
+            await desactivarMicrofono();
+
+            await desactivarCamara();
+
+            console.log(
+                "Audio y video desactivados."
+            );
+
+        }
+
+        if (btnSalirLlamada) {
+
+            btnSalirLlamada.addEventListener(
+                "click",
+                salirDeLlamada
+            );
+
+        }
+
+        // ==========================================
+        // ACTUALIZAR DISPOSITIVOS
+        // ==========================================
+
+        if (
+            navigator.mediaDevices &&
+            navigator.mediaDevices.addEventListener
+        ) {
+
+            navigator.mediaDevices.addEventListener(
+                "devicechange",
+                comprobarMicrofonos
+            );
+
+        }
+
+        // ==========================================
+        // RECONEXIÓN SOCKET.IO
+        // ==========================================
+
+        socketVideo.on("disconnect", () => {
+
+            console.warn(
+                "Socket.IO desconectado. Limpiando conexiones WebRTC."
+            );
+
+            for (const id of Array.from(
+                conexionesWebRTC.keys()
+            )) {
+
+                eliminarParticipante(id);
+
+            }
+
+            participantesVideo.clear();
+            candidatosPendientes.clear();
+            ofertasEnProceso.clear();
+            respuestasEnProceso.clear();
 
         });
 
-    }
+        socketVideo.on("connect", () => {
 
-    // ==========================================
-    // ANALIZADOR DE AUDIO
-    // ==========================================
-
-    async function iniciarIndicadorAudio() {
-
-        try {
-
-            if (!flujoAudio) return;
-
-            detenerIndicadorAudio();
-
-            contextoAudio = new AudioContext();
-
-            if (contextoAudio.state === "suspended") {
-                await contextoAudio.resume();
-            }
-
-            analizador = contextoAudio.createAnalyser();
-
-            fuenteAudio = contextoAudio.createMediaStreamSource(
-                flujoAudio
+            console.log(
+                "Socket.IO conectado. Esperando lista de participantes."
             );
 
-            analizador.fftSize = 256;
+            // sala.js / pizarra.js se encargan de volver
+            // a unirse a la sala.
+            //
+            // La lista de participantes iniciará
+            // las conexiones WebRTC.
 
-            datosAudio = new Uint8Array(
-                analizador.frequencyBinCount
+        });
+
+        socketVideo.on("connect_error", (error) => {
+
+            console.error(
+                "Error de conexión Socket.IO:",
+                error.message
             );
 
-            fuenteAudio.connect(analizador);
+        });
 
-            function actualizarNivel() {
+        // ==========================================
+        // INICIAR
+        // ==========================================
 
-                if (!analizador || !datosAudio) return;
+        comprobarMicrofonos();
 
-                analizador.getByteFrequencyData(datosAudio);
-
-                const promedio = datosAudio.reduce(
-                    (suma, valor) => suma + valor,
-                    0
-                ) / datosAudio.length;
-
-                const porcentaje = Math.min(
-                    100,
-                    (promedio / 100) * 100
-                );
-
-                if (nivelAudio) {
-                    nivelAudio.style.width = porcentaje + "%";
-                }
-
-                animacionAudio = requestAnimationFrame(
-                    actualizarNivel
-                );
-
-            }
-
-            actualizarNivel();
-
-        } catch (error) {
-
-            console.error("Error en el indicador de audio:", error);
-
-        }
-    }
-
-    // ==========================================
-    // DETENER ANALIZADOR DE AUDIO
-    // ==========================================
-
-    function detenerIndicadorAudio() {
-
-        if (animacionAudio) {
-            cancelAnimationFrame(animacionAudio);
-            animacionAudio = null;
-        }
-
-        if (fuenteAudio) {
-            fuenteAudio.disconnect();
-            fuenteAudio = null;
-        }
-
-        if (contextoAudio) {
-
-            contextoAudio.close();
-
-            contextoAudio = null;
-
-        }
-
-        analizador = null;
-        datosAudio = null;
-
-        if (nivelAudio) {
-            nivelAudio.style.width = "0%";
-        }
-
-    }
-
-    // ==========================================
-    // SALIR DE LA LLAMADA
-    // ==========================================
-
-    function salirDeLlamada() {
-
-        desactivarMicrofono();
-
-        desactivarCamara();
-
-        console.log("Saliste de la llamada.");
-
-    }
-
-    if (btnSalirLlamada) {
-
-        btnSalirLlamada.addEventListener(
-            "click",
-            salirDeLlamada
+        console.log(
+            "Videollamada preparada para:",
+            usuarioVideo,
+            "en la sala:",
+            salaVideo
         );
 
     }
 
-    // ==========================================
-    // ACTUALIZAR DISPOSITIVOS
-    // ==========================================
-
-    navigator.mediaDevices.addEventListener(
-        "devicechange",
-        comprobarMicrofonos
-    );
-
-    // ==========================================
-    // INICIAR
-    // ==========================================
-
-    iniciarDispositivo();
-
 }
-
-// ==========================================
-// VERIFICAR SOCKET.IO
-// ==========================================
-
-console.log(
-    socketVideo
-        ? "Videollamada preparada para utilizar Socket.IO."
-        : "No se encontró la conexión compartida de Socket.IO."
-);
