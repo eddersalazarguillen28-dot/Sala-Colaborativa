@@ -36,19 +36,40 @@
             </header>
 
             <!-- BARRA DE HERRAMIENTAS -->
-            <div class="barra-herramientas">
+            <div class="barra-herramientas" role="toolbar" aria-label="Herramientas de la pizarra">
 
-                <!-- HERRAMIENTAS PRINCIPALES -->
+                <!-- NAVEGAR Y SELECCIONAR -->
                 <div class="grupo-herramientas">
 
-                    <button id="btnLapiz" class="icono-herramienta activa" type="button" title="Lápiz"
+                    <button id="btnMano" class="icono-herramienta" type="button"
+                        title="Mover la pizarra (H) · También: barra espaciadora, botón central o clic derecho"
+                        aria-label="Mover pizarra">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M18 11V6a2 2 0 0 0-4 0M14 10V4a2 2 0 0 0-4 0v6M10 10.5V6a2 2 0 0 0-4 0v8" />
+                            <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.9 0-4.7-.9-6.2-2.6l-3.1-3.7a2 2 0 0 1 3.1-2.5L8 15" />
+                        </svg>
+                    </button>
+
+                    <button id="btnSeleccionar" class="icono-herramienta" type="button"
+                        title="Seleccionar, mover y cambiar tamaño (V)" aria-label="Seleccionar">
+                        <svg viewBox="0 0 24 24">
+                            <path d="m4 4 7.07 17 2.51-7.39L21 11.07z" />
+                        </svg>
+                    </button>
+
+                </div>
+
+                <!-- DIBUJO -->
+                <div class="grupo-herramientas">
+
+                    <button id="btnLapiz" class="icono-herramienta activa" type="button" title="Lápiz y pinceles (P)"
                         aria-label="Lápiz">
                         <svg viewBox="0 0 24 24">
                             <path d="m15 5 4 4M4 20l4-.8L19 8a2.8 2.8 0 0 0-4-4L4 15z" />
                         </svg>
                     </button>
 
-                    <button id="btnBorrador" class="icono-herramienta" type="button" title="Borrador"
+                    <button id="btnBorrador" class="icono-herramienta" type="button" title="Borrador (E)"
                         aria-label="Borrador">
                         <svg viewBox="0 0 24 24">
                             <path d="m7 21 12-12a2.8 2.8 0 0 0-4-4L3 17l4 4z" />
@@ -56,27 +77,44 @@
                         </svg>
                     </button>
 
-                    <button id="btnTexto" class="icono-herramienta" type="button" title="Insertar texto"
-                        aria-label="Texto">
+                    <button id="btnBorradorObjeto" class="icono-herramienta" type="button"
+                        title="Borrar objeto completo (D): pasa sobre un dibujo para quitarlo entero"
+                        aria-label="Borrar objeto">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="8" />
+                            <path d="m9 9 6 6m0-6-6 6" />
+                        </svg>
+                    </button>
+
+                    <button id="btnTexto" class="icono-herramienta" type="button"
+                        title="Texto (T) · Ctrl+Enter para terminar" aria-label="Texto">
                         <svg viewBox="0 0 24 24">
                             <path d="M4 7V4h16v3M12 4v16M8 20h8" />
                         </svg>
                     </button>
 
-                    <button id="btnRellenar" class="icono-herramienta" type="button" title="Bote de pintura"
-                        aria-label="Rellenar">
+                    <button id="btnRellenar" class="icono-herramienta" type="button"
+                        title="Bote de pintura (B): haz clic dentro de una figura cerrada" aria-label="Rellenar">
                         <svg viewBox="0 0 24 24">
                             <path d="m12 3 8 8-9 9H4l-2-2 10-10" />
                             <path d="m7 8 9 9M19 15c2 2 3 3 3 5a2 2 0 0 1-4 0c0-1 0-3 1-5z" />
                         </svg>
                     </button>
 
+                    <button id="btnLaser" class="icono-herramienta" type="button"
+                        title="Puntero láser (L): señala algo y todos lo ven" aria-label="Puntero láser">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="3" />
+                            <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" />
+                        </svg>
+                    </button>
+
                 </div>
 
-                <!-- PINCELES -->
+                <!-- PINCELES Y FORMAS -->
                 <div class="grupo-herramientas">
 
-                    <select id="tipoPincel" class="select-icono" title="Tipos de pincel">
+                    <select id="tipoPincel" class="select-icono" title="Tipo de pincel">
                         <option value="lapiz">Lápiz clásico</option>
                         <option value="pincel">Pincel clásico</option>
                         <option value="aerografo">Aerógrafo</option>
@@ -86,77 +124,53 @@
                         <option value="crayon">Crayón</option>
                     </select>
 
-                </div>
-
-                <!-- FORMAS -->
-                <div class="grupo-herramientas">
-
                     <select id="herramientaForma" class="select-icono" title="Formas geométricas">
                         <option value="">Formas</option>
                         <option value="rectangulo">Rectángulo</option>
-                        <option value="circulo">Círculo</option>
-                        <option value="linea">Línea recta</option>
+                        <option value="circulo">Círculo / elipse</option>
                         <option value="triangulo">Triángulo</option>
+                        <option value="rombo">Rombo</option>
+                        <option value="estrella">Estrella</option>
+                        <option value="linea">Línea recta</option>
                         <option value="flecha">Flecha</option>
+                        <option value="flecha2">Flecha doble</option>
                     </select>
 
-                </div>
-
-                <!-- SELECCIÓN -->
-                <div class="grupo-herramientas">
-
-                    <select id="tipoSeleccion" class="select-icono" title="Herramienta de selección">
-                        <option value="">Selección</option>
-                        <option value="rectangular">Selección rectangular</option>
-                        <option value="libre">Selección libre</option>
-                    </select>
-
-                    <button id="btnRecortar" class="icono-herramienta" type="button" title="Recortar"
-                        aria-label="Recortar">
+                    <button id="btnRellenoForma" class="icono-herramienta" type="button"
+                        title="Dibujar las figuras ya rellenas" aria-label="Figuras rellenas">
                         <svg viewBox="0 0 24 24">
-                            <path d="M6 3v12a3 3 0 0 0 3 3h12M18 21V9a3 3 0 0 0-3-3H3" />
-                            <path d="m8 8 8 8" />
+                            <rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" fill-opacity=".35" />
                         </svg>
                     </button>
-
-                </div>
-
-                <!-- CAMBIAR TAMAÑO Y GIRAR -->
-                <div class="grupo-herramientas">
-
-                    <button id="btnRedimensionar" class="icono-herramienta" type="button" title="Cambiar tamaño"
-                        aria-label="Cambiar tamaño">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M4 9V4h5M20 15v5h-5M4 4l7 7M20 20l-7-7" />
-                        </svg>
-                    </button>
-
-                    <select id="tipoGiro" class="select-icono" title="Girar contenido">
-                        <option value="">Girar</option>
-                        <option value="90">90°</option>
-                        <option value="180">180°</option>
-                        <option value="270">270°</option>
-                    </select>
 
                 </div>
 
                 <!-- COLORES -->
                 <div class="grupo-herramientas grupo-colores">
 
-                    <button class="color-opcion seleccionado" data-color="#000000" style="background:#000000"
-                        title="Negro" aria-label="Negro"></button>
+                    <button class="color-opcion seleccionado" type="button" data-color="#000000"
+                        style="background:#000000" title="Negro" aria-label="Negro"></button>
 
-                    <button class="color-opcion" data-color="#ef4444" style="background:#ef4444" title="Rojo"
-                        aria-label="Rojo"></button>
+                    <button class="color-opcion" type="button" data-color="#ef4444" style="background:#ef4444"
+                        title="Rojo" aria-label="Rojo"></button>
 
-                    <button class="color-opcion" data-color="#3b82f6" style="background:#3b82f6" title="Azul"
-                        aria-label="Azul"></button>
+                    <button class="color-opcion" type="button" data-color="#f97316" style="background:#f97316"
+                        title="Naranja" aria-label="Naranja"></button>
 
-                    <button class="color-opcion" data-color="#22c55e" style="background:#22c55e" title="Verde"
-                        aria-label="Verde"></button>
+                    <button class="color-opcion" type="button" data-color="#eab308" style="background:#eab308"
+                        title="Amarillo" aria-label="Amarillo"></button>
 
-                    <button class="color-opcion" data-color="#eab308" style="background:#eab308" title="Amarillo"
-                        aria-label="Amarillo"></button>
+                    <button class="color-opcion" type="button" data-color="#22c55e" style="background:#22c55e"
+                        title="Verde" aria-label="Verde"></button>
+
+                    <button class="color-opcion" type="button" data-color="#3b82f6" style="background:#3b82f6"
+                        title="Azul" aria-label="Azul"></button>
+
+                    <button class="color-opcion" type="button" data-color="#8b5cf6" style="background:#8b5cf6"
+                        title="Morado" aria-label="Morado"></button>
+
+                    <button class="color-opcion" type="button" data-color="#ffffff" style="background:#ffffff"
+                        title="Blanco" aria-label="Blanco"></button>
 
                     <div class="selector-personalizado">
                         <label for="colorLapiz" title="Elegir color personalizado">+</label>
@@ -165,7 +179,7 @@
 
                 </div>
 
-                <!-- GROSOR -->
+                <!-- GROSOR Y TAMAÑO DE TEXTO -->
                 <div class="grupo-herramientas grupo-grosor">
 
                     <svg viewBox="0 0 24 24">
@@ -173,16 +187,67 @@
                         <path d="M4 8v8M20 8v8" />
                     </svg>
 
-                    <input type="range" id="grosorLapiz" min="1" max="30" value="4">
+                    <input type="range" id="grosorLapiz" min="1" max="40" value="4" title="Grosor">
 
                     <span id="valorGrosor">4 px</span>
+
+                    <select id="tamTexto" class="select-icono" title="Tamaño del texto">
+                        <option value="14">Texto 14</option>
+                        <option value="18">Texto 18</option>
+                        <option value="24" selected>Texto 24</option>
+                        <option value="32">Texto 32</option>
+                        <option value="48">Texto 48</option>
+                        <option value="72">Texto 72</option>
+                        <option value="110">Texto 110</option>
+                    </select>
+
+                </div>
+
+                <!-- ACCIONES SOBRE LA SELECCIÓN -->
+                <div class="grupo-herramientas">
+
+                    <select id="tipoGiro" class="select-icono" title="Girar lo seleccionado" disabled>
+                        <option value="">Girar</option>
+                        <option value="90">90° ⟳</option>
+                        <option value="180">180°</option>
+                        <option value="270">90° ⟲</option>
+                    </select>
+
+                    <button id="btnVoltearH" class="icono-herramienta" type="button"
+                        title="Voltear horizontalmente" aria-label="Voltear horizontal" disabled>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 3v18M8 7 3 12l5 5V7zM16 7l5 5-5 5V7z" />
+                        </svg>
+                    </button>
+
+                    <button id="btnVoltearV" class="icono-herramienta" type="button"
+                        title="Voltear verticalmente" aria-label="Voltear vertical" disabled>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M3 12h18M7 8l5-5 5 5H7zM7 16l5 5 5-5H7z" />
+                        </svg>
+                    </button>
+
+                    <button id="btnDuplicar" class="icono-herramienta" type="button"
+                        title="Duplicar (Ctrl+D)" aria-label="Duplicar" disabled>
+                        <svg viewBox="0 0 24 24">
+                            <rect x="9" y="9" width="11" height="11" rx="2" />
+                            <path d="M5 15V6a2 2 0 0 1 2-2h9" />
+                        </svg>
+                    </button>
+
+                    <button id="btnEliminar" class="icono-herramienta icono-peligro" type="button"
+                        title="Eliminar lo seleccionado (Supr)" aria-label="Eliminar selección" disabled>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M18 6 6 18M6 6l12 12" />
+                        </svg>
+                    </button>
 
                 </div>
 
                 <!-- HISTORIAL -->
                 <div class="grupo-herramientas">
 
-                    <button id="btnDeshacer" class="icono-herramienta" type="button" title="Deshacer"
+                    <button id="btnDeshacer" class="icono-herramienta" type="button" title="Deshacer (Ctrl+Z)"
                         aria-label="Deshacer">
                         <svg viewBox="0 0 24 24">
                             <path d="M9 14 4 9l5-5" />
@@ -190,7 +255,7 @@
                         </svg>
                     </button>
 
-                    <button id="btnRehacer" class="icono-herramienta" type="button" title="Rehacer"
+                    <button id="btnRehacer" class="icono-herramienta" type="button" title="Rehacer (Ctrl+Y)"
                         aria-label="Rehacer">
                         <svg viewBox="0 0 24 24">
                             <path d="m15 14 5-5-5-5" />
@@ -200,40 +265,124 @@
 
                 </div>
 
-                <!-- ZOOM -->
+                <!-- VISTA: ZOOM, AJUSTAR, CUADRÍCULA -->
                 <div class="grupo-herramientas">
 
-                    <button id="btnZoomMenos" class="icono-herramienta" type="button" title="Alejar">−</button>
+                    <button id="btnZoomMenos" class="icono-herramienta" type="button" title="Alejar (−)"
+                        aria-label="Alejar">−</button>
 
                     <span id="valorZoom">100%</span>
 
-                    <button id="btnZoomMas" class="icono-herramienta" type="button" title="Acercar">+</button>
+                    <button id="btnZoomMas" class="icono-herramienta" type="button" title="Acercar (+)"
+                        aria-label="Acercar">+</button>
 
                     <button id="btnZoomReset" class="icono-herramienta" type="button"
-                        title="Restablecer zoom">1:1</button>
+                        title="Zoom al 100% (0)" aria-label="Zoom 100%">1:1</button>
+
+                    <button id="btnZoomAjustar" class="icono-herramienta" type="button"
+                        title="Ver todo el contenido (1)" aria-label="Ajustar a contenido">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4" />
+                        </svg>
+                    </button>
+
+                    <button id="btnRuedaZoom" class="icono-herramienta" type="button"
+                        title="Rueda del ratón: alternar entre mover la pizarra y hacer zoom"
+                        aria-label="Rueda del ratón">
+                        <svg viewBox="0 0 24 24">
+                            <rect x="7" y="3" width="10" height="18" rx="5" />
+                            <path d="M12 7v3" />
+                        </svg>
+                    </button>
+
+                    <button id="btnCuadricula" class="icono-herramienta activa" type="button"
+                        title="Mostrar u ocultar la cuadrícula" aria-label="Cuadrícula">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 4h16v16H4zM4 12h16M12 4v16" />
+                        </svg>
+                    </button>
 
                 </div>
 
-                <!-- LIMPIAR -->
+                <!-- EXPORTAR, LIMPIAR, AYUDA -->
                 <div class="grupo-herramientas">
+
+                    <button id="btnExportar" class="icono-herramienta" type="button"
+                        title="Descargar la pizarra como imagen PNG" aria-label="Descargar imagen">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
+                        </svg>
+                    </button>
 
                     <button id="btnLimpiar" class="icono-herramienta icono-peligro" type="button"
                         title="Limpiar toda la pizarra" aria-label="Limpiar pizarra">
-
                         <svg viewBox="0 0 24 24">
                             <path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6" />
                             <path d="M10 11v5M14 11v5" />
                         </svg>
-
                     </button>
+
+                    <button id="btnAyuda" class="icono-herramienta" type="button"
+                        title="Atajos y ayuda" aria-label="Ayuda">?</button>
 
                 </div>
 
             </div>
 
-            <!-- CANVAS -->
+            <!-- CANVAS INFINITO -->
             <div class="contenedor-canvas">
-                <canvas id="pizarraCanvas"></canvas>
+
+                <canvas id="pizarraCanvas" tabindex="0"></canvas>
+
+                <textarea id="editorTexto" class="editor-texto" hidden spellcheck="false"
+                    aria-label="Escribe el texto"></textarea>
+
+                <div id="avisoPizarra" class="aviso-pizarra" role="status" aria-live="polite"></div>
+
+                <div id="panelAyuda" class="panel-ayuda" hidden>
+                    <h3>Moverte por la pizarra</h3>
+                    <ul>
+                        <li>Mantén <b>barra espaciadora</b> y arrastra</li>
+                        <li>Botón <b>central</b> o <b>derecho</b> del ratón, arrastrando</li>
+                        <li>Herramienta <b>mano</b> (H)</li>
+                        <li><b>Rueda</b> del ratón / dos dedos en el trackpad</li>
+                        <li><b>Flechas</b> del teclado</li>
+                        <li>En pantalla táctil: <b>dos dedos</b></li>
+                    </ul>
+                    <h3>Zoom</h3>
+                    <ul>
+                        <li><b>Ctrl + rueda</b> o pellizcar</li>
+                        <li><b>+</b> / <b>−</b> · <b>0</b> = 100% · <b>1</b> = ver todo</li>
+                        <li>El botón del ratón cambia la rueda a zoom</li>
+                    </ul>
+                    <h3>Seleccionar</h3>
+                    <ul>
+                        <li>Clic o arrastra un recuadro · <b>Shift</b> suma</li>
+                        <li>Arrastra las esquinas para cambiar el tamaño (<b>Shift</b> mantiene la proporción)</li>
+                        <li><b>Ctrl+C / X / V / D</b> · <b>Supr</b> elimina</li>
+                        <li>Doble clic en un texto para editarlo</li>
+                        <li>Con algo seleccionado, cambiar color o grosor lo modifica</li>
+                    </ul>
+                    <h3>Otros</h3>
+                    <ul>
+                        <li><b>Shift</b> al dibujar figuras: cuadrado, círculo perfecto o línea a 45°</li>
+                        <li><b>Ctrl+Z</b> / <b>Ctrl+Y</b> deshacer y rehacer</li>
+                        <li><b>Esc</b> cancela o quita la selección</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- CONFIRMAR LIMPIEZA -->
+            <div id="modalLimpiar" class="modal-pizarra" hidden>
+                <div class="modal-caja" role="dialog" aria-modal="true" aria-labelledby="tituloLimpiar">
+                    <h2 id="tituloLimpiar">¿Limpiar toda la pizarra?</h2>
+                    <p>Se borrará el contenido para todos los participantes. Puedes deshacerlo con Ctrl+Z.</p>
+                    <div class="modal-acciones">
+                        <button id="btnCancelarLimpiar" type="button" class="boton-secundario">Cancelar</button>
+                        <button id="btnConfirmarLimpiar" type="button" class="boton-peligro">Limpiar pizarra</button>
+                    </div>
+                </div>
             </div>
 
         </section>
