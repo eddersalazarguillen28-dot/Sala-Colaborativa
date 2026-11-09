@@ -28,6 +28,11 @@
                     <span>Participante:</span>
                     <strong id="usuarioActual">Usuario</strong>
                 </div>
+
+                <button id="btnAbrirHistorial" class="btn-historial-toggle" type="button">
+                    Historial y opciones
+                </button>
+
             </header>
 
             <!-- BARRA DE HERRAMIENTAS -->
@@ -336,6 +341,42 @@
 
     </main>
 
+    <!--MODAL DE HISTORIAL Y EXPORTACIÓN-->
+    <div id="modalHistorial" class="modal-historial" style="display:none;">
+        <div class="modal-contenido">
+            <div class="modal-header">
+                <h3>Historial de actividades</h3>
+                <button id="CerrarHistorial" class="btn-cerrar-modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <!--Seccion participantes-->
+                <div class="seccion-participantes">
+                    <h4>Participantes (<span id="user-count">0</span>)</h4>
+                    <ul id="user-list"></ul>
+                </div>
+
+                <!--Seccion exportar pantalla-->
+                <div class="seccion-exportar">
+                    <h4>Exportar pantalla</h4>
+                    <button id="btnExportarPng" type="button">Imagen PNG</button>
+                    <button id="btnExportarPdf" type="button">Documento PDF</button>
+
+                </div>
+
+                <!--Registro de actividades/historial-->
+                <div class="seccion-registro">
+                    <h4>Registro de eventos</h4>
+                    <div id="historialActividades" class="mensajes-historial"></div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
     <!-- SCRIPTS -->
     <script src="https://cdn.socket.io/4.8.4/socket.io.min.js"></script>
 
@@ -343,6 +384,7 @@
     <script src="../javascripts/pizarra.js" defer></script>
     <script src="../javascripts/chat.js" defer></script>
     <script src="../javascripts/videollamada.js" defer></script>
+    <script src="../javascripts/historial.js"></script>
 
 </body>
 

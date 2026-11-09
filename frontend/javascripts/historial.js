@@ -19,6 +19,25 @@ const toastContaineer = document.getElementById('toast-container');
 
 socket.emit("unirse-sala", {nombreSala,nombreUsuario});
 
+document.addEventListener("DOMContentLoaded", () => {
+    const btnAbrir = document.getElementById("btnAbrirHistorial");
+    const btnCerrar = document.getElementById("CerrarHistorial");
+    const modal = document.getElementById("modalHistorial");
+
+    if (btnAbrir && modal){
+        btnAbrir.addEventListener("click", () => {
+            modal.style.display = "flex";
+        });
+    }
+
+    if(btnCerrar && modal){
+        btnCerrar.addEventListener("click", () =>{
+            modal.style.display = "none";
+        });
+
+    }
+});
+
 //FUNCT que registra un nuevo evento en el historial
 function registrarActividad(usuario,accion){
     if(!historialContainer)return;

@@ -49,6 +49,8 @@ const io = new Server(server, {
 configurarSalas(io);
 configurarPizarra(io);
 
+const path = require("path");
+
 // ==========================================
 // RUTA PRINCIPAL
 // ==========================================
