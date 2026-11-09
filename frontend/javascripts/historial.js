@@ -24,7 +24,7 @@ function registrarActividad(usuario,accion){
     if(!historialContainer)return;
 
     const ahora = new Date();
-    const horaFormateada = ahora.toLocaleDateString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const horaFormateada = ahora.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 
     //Estructura tarjeta historial
     const item = document.createElement('div');
@@ -42,7 +42,7 @@ function registrarActividad(usuario,accion){
 
 //Prueba
 
-registrarActividad('Sistema','Te uniste a "${nombreSala}" como ${nombreUsuario}');
+registrarActividad('Sistema',`Te uniste a "${nombreSala}" como ${nombreUsuario}`);
 
 //Exportación a PNG y PDF 
 
@@ -180,8 +180,8 @@ function actualizarListaUsuarios(usuarios){
 //Cuando el ususario entra a la sala
 socket.on('user-joined', (data) => {
     const nombre = data.nombre || "Un usuario";
-    mostrarNotificacion('${data.nombre} se unió a la sala','join');
-    registrarActividad('Sistema','${data.nombre} entró a la sesión');
+    mostrarNotificacion(`${data.nombre} se unió a la sala`,'join');
+    registrarActividad('Sistema',`${data.nombre} entró a la sesión`);
 
     if(data.usuarios){
         actualizarListaUsuarios(data.usuarios);
@@ -190,8 +190,9 @@ socket.on('user-joined', (data) => {
 
 //Cuando un usuario sale de la sala 
 socket.on('user-left',(data) => {
-    mostrarNotificacion('${data.nombre} abandonó la sala','leave');
-    registrarActividad('Sistema','${data.nombre} salió de la sesión');
+    const nombre = data.nombre || "Un usuario";
+    mostrarNotificacion(`${data.nombre} abandonó la sala`,'leave');
+    registrarActividad('Sistema',`${data.nombre} salió de la sesión`);
 
     if(data.usuarios){
         actualizarListaUsuarios(data.usuarios);
