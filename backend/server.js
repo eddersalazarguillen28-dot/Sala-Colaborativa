@@ -68,20 +68,6 @@ io.on("connection", (socket) => {
       const nuevaSala = datos.nombreSala || datos.sala;
       const nuevoUsuario = datos.nombreUsuario || usuarioActual;
 
-      ///////SALA USUARIO//////////////////
-      socket.join(salaActual);
-      if (!salasUsuarios[salaActual])  salasUsuarios[salaActual] = [];
-      if (!salasUsuarios[salaActual].includes(usuarioActual)) {
-        salasUsuarios[salaActual].push(usuarioActual);
-      }
-      io.to(salaActual).emit("user-joined",{
-        nombre:usuarioActual,
-        usuarios:salasUsuarios[salaActual]
-      });
-
-      console.log(`[SALA] Usuario "${usuarioActual}" (${socket.id}) se unió a: "${salaActual}"`);
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
       // Si el cliente ya está registrado en esta sala con este nombre, evitamos duplicar
       if (salaActual === nuevaSala && usuarioActual === nuevoUsuario) {
         return;
@@ -90,10 +76,24 @@ io.on("connection", (socket) => {
       salaActual = nuevaSala;
       usuarioActual = nuevoUsuario;
 
-      // Unir formalmente el socket a la sala de Socket.io
+      ///////SALA USUARIO//////////////////
       socket.join(salaActual);
 
-      console.log(`🚪 [SALA] Usuario "${usuarioActual}" (${socket.id}) se unió a: "${salaActual}"`);
+      if (!salasUsuarios[salaActual]) {
+        salasUsuarios[salaActual] = [];
+      } 
+
+      if (!salasUsuarios[salaActual].includes(usuarioActual)) {
+        salasUsuarios[salaActual].push(usuarioActual);
+      }
+
+      io.to(salaActual).emit("user-joined",{
+        nombre:usuarioActual,
+        usuarios:salasUsuarios[salaActual]
+      });
+
+      console.log(`[SALA] Usuario "${usuarioActual}" (${socket.id}) se unió a: "${salaActual}"`);
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
   });
 
