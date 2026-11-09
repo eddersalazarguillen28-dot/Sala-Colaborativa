@@ -57,6 +57,14 @@ function crearConexionWebRTC(idParticipante) {
 
     const conexion = new RTCPeerConnection(configuracionRTC);
 
+    conexion.transceptorAudio = conexion.addTransceiver("audio", {
+        direction: "sendrecv"
+    });
+
+    conexion.transceptorVideo = conexion.addTransceiver("video", {
+        direction: "sendrecv"
+    });
+
     // Recibir audio y video del participante remoto
     conexion.ontrack = (evento) => {
         if (!contenedorVideosRemotos) return;
@@ -147,20 +155,50 @@ socketVideo.on("lista-participantes", (participantes) => {
 // COMPARTIR AUDIO Y VIDEO
 // ==========================================
 
-function agregarPistasAConexion(conexion) {
+async function agregarPistasAConexion(conexion) {
+    const pistaAudioActual = flujoAudio
+        ? flujoAudio.getAudioTracks()[0]
+        : null;
 
-    if (flujoAudio) {
-        flujoAudio.getAudioTracks().forEach((pista) => {
-            conexion.addTrack(pista, flujoAudio);
-        });
+    if (conexion.transceptorAudio) {
+        await conexion.transceptorAudio.sender.replaceTrack(
+            pistaAudioActual || null
+        );
     }
 
-    if (flujoCamara) {
-        flujoCamara.getVideoTracks().forEach((pista) => {
-            conexion.addTrack(pista, flujoCamara);
-        });
-    }
+    const pistaVideoActual = flujoCamara
+        ? flujoCamara.getVideoTracks()[0]
+        : null;
 
+    if (conexion.transceptorVideo) {
+        await conexion.transceptorVideo.sender.replaceTrack(
+            pistaVideoActual || null
+        );
+    }
+}
+
+async function actualizarPistasEnConexion() {
+    for (const conexion of conexionesWebRTC.values()) {
+        const pistaAudioActual = flujoAudio
+            ? flujoAudio.getAudioTracks()[0]
+            : null;
+
+        const pistaVideoActual = flujoCamara
+            ? flujoCamara.getVideoTracks()[0]
+            : null;
+
+        if (conexion.transceptorAudio) {
+            await conexion.transceptorAudio.sender.replaceTrack(
+                pistaAudioActual || null
+            );
+        }
+
+        if (conexion.transceptorVideo) {
+            await conexion.transceptorVideo.sender.replaceTrack(
+                pistaVideoActual || null
+            );
+        }
+    }
 }
 
 // ==========================================
@@ -174,7 +212,7 @@ async function iniciarConexionComoEmisor(idParticipante) {
         const conexion = crearConexionWebRTC(idParticipante);
 
         // Compartir las pistas disponibles
-        agregarPistasAConexion(conexion);
+        await agregarPistasAConexion(conexion);
 
         // Enviar candidatos ICE al participante
         conexion.onicecandidate = (evento) => {
@@ -234,7 +272,7 @@ socketVideo.on("oferta-webrtc", async (datos) => {
         const conexion = crearConexionWebRTC(idParticipante);
 
         // Compartir las pistas locales disponibles
-        agregarPistasAConexion(conexion);
+        await agregarPistasAConexion(conexion);
 
         // Preparar candidatos ICE
         conexion.onicecandidate = (evento) => {
@@ -320,6 +358,16 @@ socketVideo.on("respuesta-webrtc", async (datos) => {
             new RTCSessionDescription(datos.respuesta)
         );
 
+        const candidatos = candidatosPendientes.get(datos.emisor) || [];
+
+        for (const candidato of candidatos) {
+            await conexion.addIceCandidate(
+                new RTCIceCandidate(candidato)
+            );
+        }
+
+        candidatosPendientes.delete(datos.emisor);
+
         console.log(
             "Respuesta WebRTC recibida de:",
             datos.emisor
@@ -395,6 +443,10 @@ socketVideo.on("usuario-unido", (participante) => {
         participante.id,
         participante.nombre
     );
+
+    if ( socketVideo.id.localeCompare(participante.id) < 0 && !conexionesWebRTC.has(participante.id)) {
+        iniciarConexionComoEmisor(participante.id);
+    }
 
     console.log(
         "Nuevo participante:",
@@ -608,6 +660,8 @@ if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
 
             pistaAudio.enabled = true;
 
+            await actualizarPistasEnConexion();
+
             btnMicrofono.textContent = "Desactivar micrófono";
 
             estadoMicrofono.textContent = "Micrófono encendido";
@@ -633,7 +687,7 @@ if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     // DESACTIVAR MICRÓFONO
     // ==========================================
 
-    function desactivarMicrofono() {
+    async function desactivarMicrofono() {
 
         if (flujoAudio) {
 
@@ -641,6 +695,8 @@ if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
 
             flujoAudio = null;
             pistaAudio = null;
+
+            await actualizarPistasEnConexion();
 
         }
 
@@ -720,6 +776,8 @@ if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
 
             pistaVideo = flujoCamara.getVideoTracks()[0];
 
+            await actualizarPistasEnConexion();
+
             if (videoLocal) {
                 videoLocal.srcObject = flujoCamara;
             }
@@ -743,7 +801,7 @@ if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     // DESACTIVAR CÁMARA
     // ==========================================
 
-    function desactivarCamara() {
+    async function desactivarCamara() {
 
         if (flujoCamara) {
 
@@ -751,11 +809,31 @@ if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
 
             flujoCamara = null;
             pistaVideo = null;
+            await actualizarPistasEnConexion();
 
         }
 
         if (videoLocal) {
             videoLocal.srcObject = null;
+        } function desactivarCamara() {
+
+            if (flujoCamara) {
+
+                flujoCamara.getTracks().forEach(pista => pista.stop());
+
+                flujoCamara = null;
+                pistaVideo = null;
+
+            }
+
+            if (videoLocal) {
+                videoLocal.srcObject = null;
+            }
+
+            btnCamara.textContent = "Activar cámara";
+
+            console.log("Cámara desactivada.");
+
         }
 
         btnCamara.textContent = "Activar cámara";
