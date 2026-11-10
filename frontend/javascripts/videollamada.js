@@ -58,6 +58,8 @@ if (!socketVideo) {
 
         socketVideo.on("lista-videollamada", (participantes) => {
 
+            console.log("CONFIRMACIÓN DEL SERVIDOR:", participantes);
+
             participantesActivosVideo.clear();
 
             participantes.forEach((id) => {
