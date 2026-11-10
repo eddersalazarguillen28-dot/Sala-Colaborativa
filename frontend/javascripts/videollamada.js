@@ -14,6 +14,7 @@ const videoLocal = document.getElementById("videoLocal");
 const contenedorVideosRemotos = document.getElementById("contenedorVideosRemotos");
 const btnMicrofono = document.getElementById("btnMicrofono");
 const btnCamara = document.getElementById("btnCamara");
+const btnEntrarLlamada = document.getElementById("btnEntrarLlamada");
 const btnSalirLlamada = document.getElementById("btnSalirLlamada");
 const estadoMicrofono = document.getElementById("estadoMicrofono");
 const nivelAudio = document.getElementById("nivelAudio");
@@ -53,6 +54,92 @@ if (!socketVideo) {
         const conexionesWebRTC = new Map();
         const participantesVideo = new Map();
         const candidatosPendientes = new Map();
+        const participantesActivosVideo = new Set();
+
+        socketVideo.on("lista-videollamada", (participantes) => {
+
+            participantesActivosVideo.clear();
+
+            participantes.forEach((id) => {
+
+                if (id !== socketVideo.id) {
+                    participantesActivosVideo.add(id);
+                }
+
+            });
+
+            // Mostrar el botón para salir y ocultar el de entrada.
+            if (btnEntrarLlamada) btnEntrarLlamada.hidden = true;
+            if (btnSalirLlamada) btnSalirLlamada.hidden = false;
+
+            // Conectar con los participantes que ya están en la llamada.
+            participantesActivosVideo.forEach((id) => {
+
+                if (
+                    participantesVideo.has(id) &&
+                    socketVideo.id.localeCompare(id) < 0
+                ) {
+                    iniciarConexionComoEmisor(id);
+                }
+
+            });
+
+            console.log(
+                "Participantes activos en videollamada:",
+                Array.from(participantesActivosVideo)
+            );
+
+        });
+
+        socketVideo.on("sala-unida", (datos) => {
+
+            if (datos.sala !== salaVideo) return;
+
+            // Estado inicial mientras se confirma la entrada.
+            if (btnEntrarLlamada) btnEntrarLlamada.hidden = true;
+            if (btnSalirLlamada) btnSalirLlamada.hidden = false;
+
+            socketVideo.emit("entrar-videollamada", salaVideo);
+
+            console.log(
+                "Solicitando entrada a la videollamada:",
+                salaVideo
+            );
+
+        });
+
+        socketVideo.on("participante-entro-videollamada", (datos) => {
+            const idParticipante = datos.id;
+
+            if (idParticipante === socketVideo.id) return;
+
+            participantesActivosVideo.add(idParticipante);
+
+            const participante = participantesVideo.get(idParticipante);
+
+            if (participante) {
+                iniciarConexionComoEmisor(idParticipante);
+            }
+
+            console.log(
+                "Participante entró a la videollamada:",
+                idParticipante
+            );
+        })
+
+        socketVideo.on("participante-salio-videollamada", (datos) => {
+            const idParticipante = datos.id;
+
+            participantesActivosVideo.delete(idParticipante);
+
+            eliminarParticipante(idParticipante);
+
+            console.log(
+                "Participante salió de la videollamada:",
+                idParticipante
+            );
+        });
+
         const ofertasEnProceso = new Set();
         const respuestasEnProceso = new Set();
 
@@ -240,6 +327,7 @@ if (!socketVideo) {
         async function iniciarConexionComoEmisor(idParticipante) {
             if (!perteneceALaSala() ||
                 !participantesVideo.has(idParticipante) ||
+                !participantesActivosVideo.has(idParticipante) ||
                 ofertasEnProceso.has(idParticipante) ||
                 conexionesWebRTC.has(idParticipante)) {
                 return;
@@ -262,10 +350,13 @@ if (!socketVideo) {
                     destino: idParticipante,
                     oferta: conexion.localDescription
                 });
+
                 console.log("Oferta WebRTC enviada a:", idParticipante);
+
             } catch (error) {
                 console.error("Error al iniciar conexión WebRTC:", error);
                 eliminarParticipante(idParticipante);
+
             } finally {
                 ofertasEnProceso.delete(idParticipante);
             }
@@ -382,27 +473,49 @@ if (!socketVideo) {
             const idsActuales = new Set();
 
             participantes.forEach(participante => {
-                if (!participante || typeof participante.id !== "string" ||
+                if (!participante ||
+                    typeof participante.id !== "string" ||
                     participante.id === socketVideo.id) return;
 
                 idsActuales.add(participante.id);
-                participantesVideo.set(participante.id, participante.nombre || "Participante");
+
+                participantesVideo.set(
+                    participante.id,
+                    participante.nombre || "Participante"
+                );
             });
 
-            participantesVideo.forEach((nombre, id) => actualizarNombreParticipante(id));
+            // Actualizar nombres de participantes.
+            participantesVideo.forEach((nombre, id) => {
+                actualizarNombreParticipante(id);
+            });
 
+            // Limpiar usuarios que abandonaron la sala.
             for (const id of conexionesWebRTC.keys()) {
-                if (!idsActuales.has(id)) eliminarParticipante(id);
+                if (!idsActuales.has(id)) {
+                    eliminarParticipante(id);
+                }
             }
 
-            // El participante con ID menor inicia la conexión.
-            participantesVideo.forEach((nombre, id) => {
-                if (socketVideo.id.localeCompare(id) < 0) {
+            for (const id of participantesActivosVideo) {
+                if (!idsActuales.has(id)) {
+                    participantesActivosVideo.delete(id);
+                }
+            }
+
+            // Conectar únicamente con participantes activos en la llamada.
+            participantesActivosVideo.forEach(id => {
+                if (participantesVideo.has(id) &&
+                    socketVideo.id.localeCompare(id) < 0) {
                     iniciarConexionComoEmisor(id);
                 }
             });
 
-            console.log("Participantes disponibles:", Array.from(participantesVideo.entries()));
+            console.log(
+                "Participantes disponibles:",
+                Array.from(participantesVideo.entries())
+            );
+
         });
 
         // ==========================================
@@ -415,7 +528,7 @@ if (!socketVideo) {
 
             participantesVideo.set(participante.id, participante.nombre || "Participante");
             actualizarNombreParticipante(participante.id);
-            console.log("Nuevo participante:", participante.nombre);
+            console.log("Nuevo participante en la sala:", participante.nombre);
         });
 
         // ==========================================
@@ -423,7 +536,7 @@ if (!socketVideo) {
         // ==========================================
 
         function eliminarParticipante(idParticipante) {
-            participantesVideo.delete(idParticipante);
+            participantesActivosVideo.delete(idParticipante)
             candidatosPendientes.delete(idParticipante);
             ofertasEnProceso.delete(idParticipante);
             respuestasEnProceso.delete(idParticipante);
@@ -448,11 +561,37 @@ if (!socketVideo) {
         }
 
         socketVideo.on("usuario-salio", participante => {
-            if (participante && participante.id) eliminarParticipante(participante.id);
+
+            if (!participante || !participante.id) return;
+
+            participantesActivosVideo.delete(participante.id);
+
+            participantesVideo.delete(participante.id);
+
+            eliminarParticipante(participante.id);
+
+            console.log(
+                "Participante abandonó la sala:",
+                participante.id
+            );
+
         });
 
         socketVideo.on("usuario-desconectado", participante => {
-            if (participante && participante.id) eliminarParticipante(participante.id);
+
+            if (!participante || !participante.id) return;
+
+            participantesActivosVideo.delete(participante.id);
+
+            participantesVideo.delete(participante.id);
+
+            eliminarParticipante(participante.id);
+
+            console.log(
+                "Participante desconectado:",
+                participante.id
+            );
+
         });
 
         // ==========================================
@@ -689,12 +828,39 @@ if (!socketVideo) {
         }
 
         async function salirDeLlamada() {
+
+            // Avisar al servidor que salimos de la videollamada.
+            socketVideo.emit("salir-videollamada", salaVideo);
+
+            // Cerrar todas las conexiones WebRTC.
+            for (const id of Array.from(conexionesWebRTC.keys())) {
+                eliminarParticipante(id);
+            }
+
+            // Limpiar participantes activos.
+            participantesActivosVideo.clear();
+
+            // Mostrar el botón para entrar y ocultar el de salida.
+            if (btnEntrarLlamada) btnEntrarLlamada.hidden = false;
+            if (btnSalirLlamada) btnSalirLlamada.hidden = true;
+
+            // Apagar micrófono y cámara.
             await desactivarMicrofono();
             await desactivarCamara();
-            console.log("Audio y video desactivados.");
+
+            console.log("Saliste de la videollamada. Sigues en la sala colaborativa.");
+
         }
 
         if (btnSalirLlamada) btnSalirLlamada.addEventListener("click", salirDeLlamada);
+
+        if (btnEntrarLlamada) {
+            btnEntrarLlamada.addEventListener("click", () => {
+                socketVideo.emit("entrar-videollamada", salaVideo);
+
+                console.log("Solicitando volver a entrar a la videollamada");
+            });
+        }
 
         if (navigator.mediaDevices?.addEventListener) {
             navigator.mediaDevices.addEventListener("devicechange", comprobarMicrofonos);
@@ -708,6 +874,7 @@ if (!socketVideo) {
             console.warn("Socket.IO desconectado. Limpiando conexiones WebRTC.");
             for (const id of Array.from(conexionesWebRTC.keys())) eliminarParticipante(id);
             participantesVideo.clear();
+            participantesActivosVideo.clear();
             candidatosPendientes.clear();
             ofertasEnProceso.clear();
             respuestasEnProceso.clear();
