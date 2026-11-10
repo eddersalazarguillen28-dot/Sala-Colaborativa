@@ -2,8 +2,7 @@
 
 Módulo de pizarra interactiva del proyecto de sala colaborativa. Permite dibujar, escribir, insertar formas, rellenar y editar contenido sobre un lienzo compartido, con sincronización en tiempo real entre los participantes mediante **Socket.IO**.
 
-> **Responsable del módulo:** Edder — Frontend + Pizarra interactiva
-> **Equipo:** Christopher, Kooper, Estefanía, Edder
+> **Equipo:** Christopher, Jose, Estefanía, Edder
 
 ---
 
