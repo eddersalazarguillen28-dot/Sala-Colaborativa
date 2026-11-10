@@ -87,11 +87,65 @@ app.get("/api/estado", (req, res) => {
 // CONEXIONES Y SEÑALIZACIÓN WEBRTC
 // ==========================================
 
+const participantesEnLlamada = new Map();
+
 io.on("connection", (socket) => {
 
     console.log(
         `🟢 [CONEXIÓN] Cliente conectado: ${socket.id}`
     );
+
+    socket.on("entrar-videollamada", (nombreSala) => {
+        if (typeof nombreSala !== "string" || !nombreSala.trim() || !socket.rooms.has(nombreSala.trim())
+        ) {
+            socket.emit("error-webrtc", "No perteneces a esta sala");
+            return;
+        }
+
+        const sala = nombreSala.trim();
+
+        if (!participantesEnLlamada.has(sala)) {
+            participantesEnLlamada.set(sala, new Set());
+        }
+
+        const participantes = participantesEnLlamada.get(sala);
+
+        if (participantes.has(socket.id)) return;
+
+        participantes.add(socket.id);
+
+        socket.to(sala).emit("participante-entro-videollamada", {
+            id: socket.id
+        });
+
+        socket.emit("lista-videollamada", Array.from(participantes));
+
+        console.log(`${socket.id} entró a la videollamada de ${sala}`);
+    });
+
+    socket.on("salir-videollamada", (nombreSala) => {
+        if (typeof nombreSala !== "string") return;
+
+        const sala = nombreSala.trim();
+
+        if (!participantesEnLlamada.has(sala)) return;
+
+        const participantes = participantesEnLlamada.get(sala);
+
+        if (!participantes.has(socket.id)) return;
+
+        participantes.delete(socket.id);
+
+        socket.to(sala).emit("participante-salio-videollamada", {
+            id: socket.id
+        });
+
+        if (participantes.size === 0) {
+            participantesEnLlamada.delete(sala);
+        }
+
+        console.log(`${socket.id} salió de la videollamada de ${sala}`);
+    });
 
     // ======================================
     // VALIDAR Y REENVIAR SEÑALES WEBRTC
@@ -141,6 +195,16 @@ io.on("connection", (socket) => {
             return;
         }
 
+        const participantes = participantesEnLlamada.get(nombreSala);
+
+        if (!participantes ||!participantes.has(socket.id)) {
+            socket.emit(
+                "error-webrtc",
+                "Debes estar dentro de la videollamada"
+            );
+            return;
+        }
+
         // Buscar al destinatario.
         const destinatario = io.sockets.sockets.get(idDestino);
 
@@ -156,6 +220,14 @@ io.on("connection", (socket) => {
                 "El participante destinatario no está conectado"
             );
 
+            return;
+        }
+
+        if (!participantes.has(idDestino)) {
+            socket.emit(
+                "error-webrtc",
+                "El destionatario no está en la videollamada"
+            );
             return;
         }
 
@@ -231,8 +303,29 @@ io.on("connection", (socket) => {
     // ======================================
     // DETECTAR DESCONEXIÓN
     // ======================================
-
     socket.on("disconnect", (reason) => {
+
+        for (const [sala, participantes] of participantesEnLlamada) {
+
+            if (participantes.has(socket.id)) {
+
+                participantes.delete(socket.id);
+
+                socket.to(sala).emit("participante-salio-videollamada", {
+                    id: socket.id
+                });
+
+                if (participantes.size === 0) {
+                    participantesEnLlamada.delete(sala);
+                }
+
+                console.log(
+                    `📴 ${socket.id} salió de la videollamada de ${sala} por desconexión`
+                );
+
+            }
+
+        }
 
         console.log(
             `🔴 [DESCONEXIÓN] Cliente: ${socket.id}`
@@ -243,6 +336,7 @@ io.on("connection", (socket) => {
         );
 
     });
+
 
 });
 
