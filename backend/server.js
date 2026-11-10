@@ -3,192 +3,272 @@ const http = require("http");
 const cors = require("cors");
 const { Server } = require("socket.io");
 
-// Importar los módulos de Socket.io
+// ==========================================
+// IMPORTAR MÓDULOS
+// ==========================================
+
 const configurarSalas = require("./sockets/salas");
 const configurarPizarra = require("./sockets/pizarra");
 
-// Crear la aplicación Express
+// ==========================================
+// CREAR APLICACIÓN
+// ==========================================
+
 const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+}));
+
 app.use(express.json());
 
-// Crear el servidor HTTP
+// ==========================================
+// CREAR SERVIDOR HTTP
+// ==========================================
+
 const server = http.createServer(app);
 
-// Configurar Socket.io
+// ==========================================
+// CONFIGURAR SOCKET.IO
+// ==========================================
+
 const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    },
+    pingInterval: 25000,
+    pingTimeout: 60000
 });
 
-//SALA USUARIOS///////
-const salasUsuarios = {};
-////////////////////////////////
+// ==========================================
+// REGISTRAR MÓDULOS
+// ==========================================
 
-// Configurar la gestión de salas
 configurarSalas(io);
-
-// Configurar la sincronización de la pizarra
 configurarPizarra(io);
 
-// Ruta principal
+const path = require("path");
+
+// ==========================================
+// RUTA PRINCIPAL
+// ==========================================
+
 app.get("/", (req, res) => {
-  res.send("Servidor de Sala Colaborativa funcionando");
+    res.status(200).send(
+        "Servidor de Sala Colaborativa funcionando correctamente"
+    );
 });
 
-// Ruta para comprobar el estado del servidor
+// ==========================================
+// ESTADO DEL SERVIDOR
+// ==========================================
+
 app.get("/api/estado", (req, res) => {
-  res.json({
-    proyecto: "Sala Colaborativa",
-    estado: "Activo",
-    servidor: "Node.js",
-    funcionalidades: [
-      "Gestión de salas",
-      "Participantes en tiempo real",
-      "Sincronización de pizarra",
-      "Chat en tiempo real",
-      "Videollamada WebRTC"
-    ]
-  });
+
+    res.status(200).json({
+        proyecto: "Sala Colaborativa",
+        estado: "Activo",
+        servidor: "Node.js",
+        socket: "Socket.IO conectado",
+        funcionalidades: [
+            "Gestión de salas",
+            "Participantes en tiempo real",
+            "Chat en tiempo real",
+            "Sincronización de pizarra",
+            "Videollamada WebRTC"
+        ]
+    });
+
 });
 
-// Monitoreo avanzado de conexiones, salas y eventos en tiempo real (Etapa 4)
+// ==========================================
+// CONEXIONES Y SEÑALIZACIÓN WEBRTC
+// ==========================================
+
 io.on("connection", (socket) => {
-  console.log(`🟢 [CONEXIÓN] Nuevo cliente conectado ID: ${socket.id}`);
 
-  let usuarioActual = "Christopher / Invitado";
-  let salaActual = null;
+    console.log(
+        `🟢 [CONEXIÓN] Cliente conectado: ${socket.id}`
+    );
 
-  // Registrar cuando se unan a una sala (con filtro de duplicados y unión real)
-  socket.on("unirse-sala", (datos) => {
-    if (datos) {
-      const nuevaSala = datos.nombreSala || datos.sala;
-      const nuevoUsuario = datos.nombreUsuario || usuarioActual;
+    // ======================================
+    // VALIDAR Y REENVIAR SEÑALES WEBRTC
+    // ======================================
 
-      // Si el cliente ya está registrado en esta sala con este nombre, evitamos duplicar
-      if (salaActual === nuevaSala && usuarioActual === nuevoUsuario) {
-        return;
-      }
+    function reenviarSenal(datos, tipo, propiedad) {
 
-      salaActual = nuevaSala;
-      usuarioActual = nuevoUsuario;
+        if (
+            !datos ||
+            typeof datos !== "object" ||
+            Array.isArray(datos) ||
+            typeof datos.sala !== "string" ||
+            typeof datos.destino !== "string" ||
+            !datos.destino.trim() ||
+            !datos[propiedad] ||
+            typeof datos[propiedad] !== "object"
+        ) {
 
-      ///////SALA USUARIO//////////////////
-      socket.join(salaActual);
+            socket.emit(
+                "error-webrtc",
+                "Los datos de señalización son inválidos"
+            );
 
-      if (!salasUsuarios[salaActual]) {
-        salasUsuarios[salaActual] = [];
-      } 
+            return;
+        }
 
-      if (!salasUsuarios[salaActual].includes(usuarioActual)) {
-        salasUsuarios[salaActual].push(usuarioActual);
-      }
+        const nombreSala = datos.sala.trim();
+        const idDestino = datos.destino.trim();
 
-      io.to(salaActual).emit("user-joined",{
-        nombre:usuarioActual,
-        usuarios:salasUsuarios[salaActual]
-      });
+        if (!nombreSala) {
+            socket.emit("error-webrtc", "Nombre de sala inválido");
+            return;
+        }
 
-      console.log(`[SALA] Usuario "${usuarioActual}" (${socket.id}) se unió a: "${salaActual}"`);
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Comprobar que el emisor pertenezca a la sala.
+        if (!socket.rooms.has(nombreSala)) {
+
+            console.log(
+                `⚠️ [WEBRTC] El emisor ${socket.id} no pertenece a ${nombreSala}`
+            );
+
+            socket.emit(
+                "error-webrtc",
+                "No perteneces a esta sala"
+            );
+
+            return;
+        }
+
+        // Buscar al destinatario.
+        const destinatario = io.sockets.sockets.get(idDestino);
+
+        // Comprobar que el destinatario esté conectado.
+        if (!destinatario) {
+
+            console.log(
+                `⚠️ [WEBRTC] Destinatario desconectado: ${idDestino}`
+            );
+
+            socket.emit(
+                "error-webrtc",
+                "El participante destinatario no está conectado"
+            );
+
+            return;
+        }
+
+        // Comprobar que ambos estén en la misma sala.
+        if (!destinatario.rooms.has(nombreSala)) {
+
+            console.log(
+                `⚠️ [WEBRTC] Destinatario fuera de la sala: ${idDestino}`
+            );
+
+            socket.emit(
+                "error-webrtc",
+                "El destinatario no pertenece a esta sala"
+            );
+
+            return;
+        }
+
+        // Reenviar señal únicamente al destinatario.
+        io.to(idDestino).emit(tipo, {
+            [propiedad]: datos[propiedad],
+            emisor: socket.id
+        });
+
+        console.log(
+            `📡 [WEBRTC] ${tipo}: ${socket.id} → ${idDestino} (${nombreSala})`
+        );
+
     }
-  });
 
-  // Registrar mensajes del chat si fluyen por aquí
-  socket.on("enviar-mensaje", (datos) => {
-    const { nombreSala, texto } = datos || {};
-    console.log(`💬 [CHAT] [Sala: ${nombreSala || salaActual}] ${usuarioActual}: "${texto}"`);
-  });
+    // ======================================
+    // RECIBIR OFERTA WEBRTC
+    // ======================================
 
-  // Registrar limpieza de pizarra
-  socket.on("limpiar-pizarra", (sala) => {
-    console.log(`🧹 [PIZARRA] La sala "${sala || salaActual}" fue limpiada por ${usuarioActual}`);
-  });
+    socket.on("oferta-webrtc", (datos) => {
 
-  // --- SEÑALIZACIÓN WEBRTC PARA VIDEOLLAMADA ---
+        reenviarSenal(
+            datos,
+            "oferta-webrtc",
+            "oferta"
+        );
 
-  socket.on("oferta-webrtc", (datos) => {
-    if (
-      !datos ||
-      !datos.sala ||
-      !datos.destino ||
-      !datos.oferta ||
-      !socket.rooms.has(datos.sala)
-    ) return;
-
-    const destinatario = io.sockets.sockets.get(datos.destino);
-
-    if (!destinatario || !destinatario.rooms.has(datos.sala)) return;
-
-    io.to(datos.destino).emit("oferta-webrtc", {
-      oferta: datos.oferta,
-      emisor: socket.id
     });
-  });
 
-  socket.on("respuesta-webrtc", (datos) => {
-    if (
-      !datos ||
-      !datos.sala ||
-      !datos.destino ||
-      !datos.respuesta ||
-      !socket.rooms.has(datos.sala)
-    ) return;
+    // ======================================
+    // RECIBIR RESPUESTA WEBRTC
+    // ======================================
 
-    const destinatario = io.sockets.sockets.get(datos.destino);
+    socket.on("respuesta-webrtc", (datos) => {
 
-    if (!destinatario || !destinatario.rooms.has(datos.sala)) return;
+        reenviarSenal(
+            datos,
+            "respuesta-webrtc",
+            "respuesta"
+        );
 
-    io.to(datos.destino).emit("respuesta-webrtc", {
-      respuesta: datos.respuesta,
-      emisor: socket.id
     });
-  });
 
-  socket.on("candidato-ice", (datos) => {
-    if (
-      !datos ||
-      !datos.sala ||
-      !datos.destino ||
-      !datos.candidato ||
-      !socket.rooms.has(datos.sala)
-    ) return;
+    // ======================================
+    // RECIBIR CANDIDATOS ICE
+    // ======================================
 
-    const destinatario = io.sockets.sockets.get(datos.destino);
+    socket.on("candidato-ice", (datos) => {
 
-    if (!destinatario || !destinatario.rooms.has(datos.sala)) return;
+        reenviarSenal(
+            datos,
+            "candidato-ice",
+            "candidato"
+        );
 
-    io.to(datos.destino).emit("candidato-ice", {
-      candidato: datos.candidato,
-      emisor: socket.id
     });
-  });
 
-  // Monitorear el proceso previo a la desconexión
-  socket.on("disconnecting", () => {
-    const salas = Array.from(socket.rooms);
-    console.log(`⚠️ [AVISO] El cliente ${socket.id} (${usuarioActual}) va a salir de las salas:`, salas);
-  });
+    // ======================================
+    // DETECTAR DESCONEXIÓN
+    // ======================================
 
-  // Detectar desconexión definitiva
-  socket.on("disconnect", (reason) => {
-    if(salaActual && salasUsuarios[salaActual]){
-      salasUsuarios[salaActual] = salasUsuarios[salaActual].filter(u => u !== usuarioActual);
-      io.to(salaActual).emit("user-left",{
-        nombre:usuarioActual,
-        usuarios:salasUsuarios[salaActual]
-      });
-    }
-    console.log(`🔴 [DESCONEXIÓN] Cliente desconectado ID: ${socket.id} (${usuarioActual}). Razón: ${reason}`);
-  });
+    socket.on("disconnect", (reason) => {
+
+        console.log(
+            `🔴 [DESCONEXIÓN] Cliente: ${socket.id}`
+        );
+
+        console.log(
+            `Motivo: ${reason}`
+        );
+
+    });
+
 });
 
-// Iniciar el servidor (Dinámico para Render o local en puerto 3000)
+// ==========================================
+// INICIAR SERVIDOR
+// ==========================================
+
 const PORT = process.env.PORT || 3000;
 
-server.listen(PORT, () => {
-  console.log(`Servidor escuchando en el puerto ${PORT}`);
+server.listen(PORT, "0.0.0.0", () => {
+
+    console.log(
+        `🚀 Servidor de Sala Colaborativa escuchando en el puerto ${PORT}`
+    );
+
+});
+
+// ==========================================
+// MANEJO DE ERRORES DEL SERVIDOR
+// ==========================================
+
+server.on("error", (error) => {
+
+    console.error(
+        "❌ Error en el servidor HTTP:",
+        error
+    );
+
 });

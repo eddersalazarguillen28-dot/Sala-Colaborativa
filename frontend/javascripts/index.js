@@ -1,18 +1,42 @@
-const formulario = document.getElementById("formularioIngreso");
-formulario.addEventListener("submit", function(event) {
-    event.preventDefault();
+document.addEventListener("DOMContentLoaded", () => {
 
-    const nombreUsuario = document.getElementById("nombreUsuario").value.trim();
+    const formulario = document.getElementById("formularioIngreso");
 
-    const nombreSala = document.getElementById("nombreSala").value.trim();
-
-    if (!nombreUsuario || !nombreSala) {
-        alert("Por favor, completa todos los campos");
+    if (!formulario) {
+        console.error("No se encontró el formulario de ingreso.");
         return;
     }
 
-    sessionStorage.setItem("nombreUsuario", nombreUsuario);
-    sessionStorage.setItem("nombreSala", nombreSala);
+    formulario.addEventListener("submit", (event) => {
 
-    window.location.href = "sala.html";
-})
+        event.preventDefault();
+
+        const campoUsuario = document.getElementById("nombreUsuario");
+        const campoSala = document.getElementById("nombreSala");
+
+        if (!campoUsuario || !campoSala) {
+            console.error("No se encontraron los campos del formulario.");
+            return;
+        }
+
+        const nombreUsuario = campoUsuario.value.trim();
+        const nombreSala = campoSala.value.trim();
+
+        if (!nombreUsuario || !nombreSala) {
+            alert("Por favor, completa todos los campos.");
+            return;
+        }
+
+        // Guardar información de sesión
+        sessionStorage.setItem("nombreUsuario", nombreUsuario);
+        sessionStorage.setItem("nombreSala", nombreSala);
+
+        console.log("Usuario:", nombreUsuario);
+        console.log("Sala:", nombreSala);
+
+        // Entrar a la sala
+        window.location.href = "sala.html";
+
+    });
+
+});
