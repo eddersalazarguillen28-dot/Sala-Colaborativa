@@ -4,164 +4,186 @@
 function configurarPizarra(io) {
 
     // ==========================================
-    // 1. VALIDACIONES GENERALES
+    // VALIDACIONES
     // ==========================================
 
-    function esObjeto(valor) {
+    const esObjeto = v =>
+        v !== null &&
+        typeof v === "object" &&
+        !Array.isArray(v);
+
+    const numeroValido = v =>
+        Number.isFinite(v) && Math.abs(v) <= 1000000;
+
+    const idValido = v =>
+        typeof v === "string" &&
+        v.length > 0 &&
+        v.length <= 128;
+
+    const colorValido = v =>
+        typeof v === "string" &&
+        /^#[0-9a-fA-F]{6}$/.test(v);
+
+    const grosorValido = v =>
+        Number.isFinite(v) && v > 0 && v <= 200;
+
+    function puntosValidos(pts, permitirVacio = false) {
         return (
-            valor !== null &&
-            typeof valor === "object" &&
-            !Array.isArray(valor)
+            Array.isArray(pts) &&
+            pts.length <= 20000 &&
+            (permitirVacio || pts.length >= 2) &&
+            pts.length % 2 === 0 &&
+            pts.every(numeroValido)
         );
-    }
-
-    function coordenadaValida(valor) {
-        return Number.isFinite(valor) &&
-            Math.abs(valor) <= 1000000;
-    }
-
-    function colorValido(color) {
-        return (
-            typeof color === "string" &&
-            /^#[0-9a-fA-F]{6}$/.test(color)
-        );
-    }
-
-    function grosorValido(grosor) {
-        return (
-            Number.isFinite(grosor) &&
-            grosor > 0 &&
-            grosor <= 200
-        );
-    }
-
-    function idValido(id) {
-        return (
-            (typeof id === "string" && id.length > 0 && id.length <= 128) ||
-            (typeof id === "number" && Number.isFinite(id))
-        );
-    }
-
-    function puntosValidos(pts) {
-        if (!Array.isArray(pts)) return false;
-        if (pts.length > 20000) return false;
-        if (pts.length % 2 !== 0) return false;
-
-        return pts.every(coordenadaValida);
     }
 
     // ==========================================
-    // 2. VALIDAR ELEMENTOS V2
+    // VALIDAR OBJETOS DE LA PIZARRA
     // ==========================================
 
-    function elementoValido(el) {
+    function elementoValido(e) {
 
-        if (!esObjeto(el)) return false;
+        if (!esObjeto(e) || !idValido(e.id)) return false;
 
-        if (!idValido(el.id)) return false;
+        const tipos = [
+            "trazo",
+            "borrador",
+            "poligono",
+            "elipse",
+            "linea",
+            "texto"
+        ];
 
-        if (
-            typeof el.t !== "string" ||
-            el.t.length > 40
-        ) {
-            return false;
+        if (!tipos.includes(e.t)) return false;
+
+        if (e.t === "texto") {
+            return (
+                numeroValido(e.x) &&
+                numeroValido(e.y) &&
+                typeof e.txt === "string" &&
+                e.txt.length <= 10000 &&
+                Number.isFinite(e.tam) &&
+                e.tam >= 6 &&
+                e.tam <= 200 &&
+                colorValido(e.c)
+            );
         }
 
-        if (el.p !== undefined) {
-            const pincelesPermitidos = [
+        if (!grosorValido(e.g)) return false;
+
+        if (e.t === "borrador") {
+            return puntosValidos(e.pts);
+        }
+
+        if (e.t === "elipse") {
+            return (
+                numeroValido(e.x0) &&
+                numeroValido(e.y0) &&
+                numeroValido(e.x1) &&
+                numeroValido(e.y1) &&
+                colorValido(e.c) &&
+                (e.r === null || e.r === undefined || colorValido(e.r))
+            );
+        }
+
+        if (!puntosValidos(e.pts)) return false;
+
+        if (!colorValido(e.c)) return false;
+
+        if (
+            e.r !== null &&
+            e.r !== undefined &&
+            !colorValido(e.r)
+        ) return false;
+
+        if (e.t === "trazo") {
+
+            const pinceles = [
                 "lapiz",
                 "pincel",
                 "aerografo",
                 "acuarela",
                 "oleo",
                 "marcador",
-                "crayon",
-                "borrador"
+                "crayon"
             ];
 
-            if (
-                typeof el.p !== "string" ||
-                !pincelesPermitidos.includes(el.p)
-            ) {
-                return false;
-            }
+            return (
+                pinceles.includes(e.p) &&
+                Number.isFinite(e.s)
+            );
         }
 
-        if (
-            el.c !== undefined &&
-            !colorValido(el.c)
-        ) {
-            return false;
-        }
-
-        if (
-            el.g !== undefined &&
-            !grosorValido(el.g)
-        ) {
-            return false;
-        }
-
-        if (
-            el.pts !== undefined &&
-            !puntosValidos(el.pts)
-        ) {
-            return false;
+        if (e.t === "linea") {
+            return (
+                Number.isInteger(e.fl) &&
+                e.fl >= 0 &&
+                e.fl <= 2
+            );
         }
 
         return true;
     }
 
     // ==========================================
-    // 3. VALIDAR OPERACIONES V2
+    // VALIDAR OPERACIONES V2
     // ==========================================
 
-    function operacionV2Valida(trazo) {
+    function operacionValida(t) {
 
-        if (
-            !esObjeto(trazo) ||
-            trazo.v !== 2 ||
-            typeof trazo.op !== "string"
-        ) {
-            return false;
-        }
+        if (!esObjeto(t) || t.v !== 2) return false;
 
-        switch (trazo.op) {
+        switch (t.op) {
 
-            // Comienza un nuevo trazo
             case "inicio":
+                return elementoValido(t.el);
 
-                return elementoValido(trazo.el);
-
-            // Agrega puntos al trazo
             case "pts":
-
                 return (
-                    idValido(trazo.id) &&
-                    puntosValidos(trazo.pts)
+                    idValido(t.id) &&
+                    puntosValidos(t.pts)
                 );
 
-            // Finaliza un trazo
             case "fin":
+            case "cancelar":
+                return idValido(t.id);
 
-                return idValido(trazo.id);
-
-            // Agrega o actualiza elementos
             case "agregar":
             case "actualizar":
-
+            case "estado":
                 return (
-                    Array.isArray(trazo.els) &&
-                    trazo.els.length <= 1000 &&
-                    trazo.els.every(elementoValido)
+                    Array.isArray(t.els) &&
+                    t.els.length <= 1000 &&
+                    (
+                        t.op !== "estado" ||
+                        idValido(t.rid)
+                    ) &&
+                    t.els.every(elementoValido)
                 );
 
-            // Elimina elementos
             case "eliminar":
+                return (
+                    Array.isArray(t.ids) &&
+                    t.ids.length <= 1000 &&
+                    t.ids.every(idValido)
+                );
+
+            case "pedir-estado":
+                return idValido(t.rid);
+
+            case "laser":
+                if (
+                    typeof t.u !== "string" ||
+                    !t.u.trim() ||
+                    t.u.length > 100
+                ) return false;
+
+                if (t.fin === true) return true;
 
                 return (
-                    Array.isArray(trazo.ids) &&
-                    trazo.ids.length <= 1000 &&
-                    trazo.ids.every(idValido)
+                    numeroValido(t.x) &&
+                    numeroValido(t.y) &&
+                    colorValido(t.c)
                 );
 
             default:
@@ -170,104 +192,18 @@ function configurarPizarra(io) {
     }
 
     // ==========================================
-    // 4. VALIDAR FORMATO ANTIGUO
+    // CONEXIÓN
     // ==========================================
 
-    function trazoAntiguoValido(trazo) {
+    io.on("connection", socket => {
 
-        if (!esObjeto(trazo)) return false;
-
-        const tipo = trazo.tipo || "normal";
-
-        if (tipo === "texto") {
-            return (
-                coordenadaValida(trazo.x0) &&
-                coordenadaValida(trazo.y0) &&
-                typeof trazo.texto === "string" &&
-                trazo.texto.trim().length > 0 &&
-                trazo.texto.length <= 500 &&
-                Number.isFinite(trazo.tamano) &&
-                trazo.tamano >= 8 &&
-                trazo.tamano <= 200 &&
-                colorValido(trazo.color)
-            );
-        }
-
-        if (tipo === "relleno") {
-            return (
-                coordenadaValida(trazo.x0) &&
-                coordenadaValida(trazo.y0) &&
-                colorValido(trazo.color)
-            );
-        }
-
-        if (tipo === "forma") {
-            const formasPermitidas = [
-                "rectangulo",
-                "circulo",
-                "linea",
-                "triangulo",
-                "flecha"
-            ];
-
-            return (
-                formasPermitidas.includes(trazo.forma) &&
-                coordenadaValida(trazo.x0) &&
-                coordenadaValida(trazo.y0) &&
-                coordenadaValida(trazo.x1) &&
-                coordenadaValida(trazo.y1) &&
-                colorValido(trazo.color) &&
-                grosorValido(trazo.grosor)
-            );
-        }
-
-        if (tipo === "borrador") {
-            return (
-                coordenadaValida(trazo.x0) &&
-                coordenadaValida(trazo.y0) &&
-                coordenadaValida(trazo.x1) &&
-                coordenadaValida(trazo.y1) &&
-                grosorValido(trazo.grosor)
-            );
-        }
-
-        const pincelesPermitidos = [
-            "lapiz",
-            "pincel",
-            "aerografo",
-            "acuarela",
-            "oleo",
-            "marcador",
-            "crayon"
-        ];
-
-        const pincel = trazo.pincel || "lapiz";
-
-        return (
-            coordenadaValida(trazo.x0) &&
-            coordenadaValida(trazo.y0) &&
-            coordenadaValida(trazo.x1) &&
-            coordenadaValida(trazo.y1) &&
-            colorValido(trazo.color) &&
-            grosorValido(trazo.grosor) &&
-            typeof pincel === "string" &&
-            pincelesPermitidos.includes(pincel)
-        );
-    }
-
-    // ==========================================
-    // 5. CONEXIÓN SOCKET.IO
-    // ==========================================
-
-    io.on("connection", (socket) => {
-
-        console.log(`[PIZARRA] Conectado: ${socket.id}`);
+        console.log("[PIZARRA] Conectado:", socket.id);
 
         // ======================================
-        // 6. RECIBIR TRAZOS Y OPERACIONES
+        // RECIBIR OPERACIONES
         // ======================================
 
-        socket.on("dibujar-trazo", (datos = {}) => {
+        socket.on("dibujar-trazo", datos => {
 
             try {
 
@@ -287,7 +223,6 @@ function configurarPizarra(io) {
                 const sala = datos.sala.trim();
                 const trazo = datos.trazo;
 
-                // Comprobar pertenencia a la sala
                 if (!socket.rooms.has(sala)) {
                     socket.emit(
                         "error-pizarra",
@@ -296,71 +231,50 @@ function configurarPizarra(io) {
                     return;
                 }
 
-                // Limitar tamaño del mensaje
                 const contenido = JSON.stringify(trazo);
 
                 if (
-                    !contenido ||
-                    Buffer.byteLength(contenido, "utf8") > 100000
+                    Buffer.byteLength(contenido, "utf8") > 250000
                 ) {
                     socket.emit(
                         "error-pizarra",
-                        "El dibujo supera el tamaño permitido"
+                        "Mensaje de pizarra demasiado grande"
                     );
                     return;
                 }
 
-                // Detectar protocolo
-                const esV2 = trazo.v === 2;
+                if (!operacionValida(trazo)) {
 
-                if (esV2) {
+                    socket.emit(
+                        "error-pizarra",
+                        "Datos de operación V2 inválidos: " + (trazo.op || "desconocida")
+                    );
 
-                    if (!operacionV2Valida(trazo)) {
-                        socket.emit(
-                            "error-pizarra",
-                            "Datos de operación V2 inválidos"
-                        );
-                        return;
-                    }
-
-                } else {
-
-                    if (!trazoAntiguoValido(trazo)) {
-                        socket.emit(
-                            "error-pizarra",
-                            "Datos de pincel inválidos"
-                        );
-                        return;
-                    }
-
+                    return;
                 }
 
-                // Retransmitir exactamente el contenido recibido
-                // sin modificar IDs, puntos ni operaciones.
+                // Retransmitir al resto de participantes.
                 socket.to(sala).emit("nuevo-trazo", {
-                    trazo
+                    trazo: trazo
                 });
 
             } catch (error) {
 
-                console.error(
-                    "[PIZARRA] Error procesando dibujo:",
-                    error
-                );
+                console.error("[PIZARRA] Error:", error);
 
                 socket.emit(
                     "error-pizarra",
-                    "No se pudo procesar el dibujo"
+                    "Error procesando la operación de pizarra"
                 );
             }
 
         });
 
         // ======================================
-        // 7. LIMPIAR PIZARRA
+        // LIMPIAR PIZARRA
         // ======================================
 
-        socket.on("limpiar-pizarra", (sala) => {
+        socket.on("limpiar-pizarra", sala => {
 
             if (
                 typeof sala !== "string" ||
@@ -388,23 +302,13 @@ function configurarPizarra(io) {
             console.log(
                 `[PIZARRA] Sala "${nombreSala}" limpiada`
             );
-
         });
 
-        // ======================================
-        // 8. DESCONEXIÓN
-        // ======================================
-
         socket.on("disconnect", () => {
-
-            console.log(
-                `[PIZARRA] Desconectado: ${socket.id}`
-            );
-
+            console.log("[PIZARRA] Desconectado:", socket.id);
         });
 
     });
-
 }
 
 module.exports = configurarPizarra;
