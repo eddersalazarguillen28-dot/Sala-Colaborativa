@@ -1,25 +1,35 @@
-const nombreUsuario = sessionStorage.getItem("nombreUsuario");
-const nombreSala = sessionStorage.getItem("nombreSala");
+
+//let socket;
+let nombreUsuario;
+let nombreSala;
+
+
+//const nombreUsuario = sessionStorage.getItem("nombreUsuario");
+//const nombreSala = sessionStorage.getItem("nombreSala");
 
 //SERVIDOR WEBSOCKETS 
 
 //Conectar al servidor
-const socket = io();
+//const socket = io();
 
+document.addEventListener("DOMContentLoaded",()=>{
+    nombreUsuario = sessionStorage.getItem("nombreUsuario")||"Usuario";
+    nombreSala = sessionStorage.getItem("nombreSala")||"Principal";
 
+    const spanUsuario = document.getElementById("usuarioActual");
+    if(spanUsuario) spanUsuario.textContent = nombreUsuario;
 
-//Seleccion de elementos de la interfaz
-const historialContainer = document.getElementById('actividad-historial');
-const userListContainer = document.getElementById('user-list');
-const userCountBadge = document.getElementById('user-count');
-const btnExportPng = document.getElementById('btn-export-png');
-const btnExportPdf = document.getElementById('btn-export-pdf');
-const canvas = document.getElementById('pizarraCanvas');
-const toastContaineer = document.getElementById('toast-container');
+    const spanSala = document.getElementById("nombreSalaActual");
+    if (spanSala) spanSala.textContent = `Sala: ${nombreSala}`;
 
-socket.emit("unirse-sala", {nombreSala,nombreUsuario});
+    /*if (typeof io != "undefined"){
+        socket = io();
+        socket.emit("unirse-sala",{nombreSala,nombreUsuario});
+        configurarEventosSocket();
+    }else{
+        console.error("Socket.io no está cargado");
+    }*/
 
-document.addEventListener("DOMContentLoaded", () => {
     const btnAbrir = document.getElementById("btnAbrirHistorial");
     const btnCerrar = document.getElementById("CerrarHistorial");
     const modal = document.getElementById("modalHistorial");
@@ -36,7 +46,29 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
     }
+    //Cerrar si se hace clic fuera del modal
+    if(modal){
+        modal.addEventListener("click",(e) => {
+            if(e.target === modal){
+                modal.style.display = "none";
+            }
+        });
+    }
+
+    registrarActividad('Sistema',`Te uniste a "${nombreSala}" como ${nombreUsuario}`);
+
+    configurarEventosSocketHistorial();
+
+
 });
+
+
+//Seleccion de elementos del DOM
+const historialContainer = document.getElementById('historialActividades');
+const userListContainer = document.getElementById('user-list');
+const userCountBadge = document.getElementById('user-count');
+
+//const canvas = document.getElementById('pizarraCanvas');
 
 //FUNCT que registra un nuevo evento en el historial
 function registrarActividad(usuario,accion){
@@ -48,75 +80,147 @@ function registrarActividad(usuario,accion){
     //Estructura tarjeta historial
     const item = document.createElement('div');
     item.className = 'historial-item';
+    item.style.cssText = "margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.05);padding-bottom:4px;";
     item.innerHTML = `
-        <span class = "tiempo-historial">${horaFormateada}</span>
-        <p style = "margin:0;"><strong>${usuario}:</strong> ${accion}</p>
-
-    
+        <span style = "color:#64748b;font-size:0.75rem;">[${horaFormateada}]</span>
+        <p style = "margin:2px 0 0 0;color:#cbd5e1;"><strong>${usuario}:</strong> ${accion}</p>
     `;
     //Insertar al inicio(mas reciente arriba
     historialContainer.prepend(item);
 
 }
 
-//Prueba
-
-registrarActividad('Sistema',`Te uniste a "${nombreSala}" como ${nombreUsuario}`);
-
 //Exportación a PNG y PDF 
+document.addEventListener("DOMContentLoaded",() => {
+    const btnExportPng = document.getElementById('btnExportarPng');
+    const btnExportPdf = document.getElementById('btnExportarPdf');
 
-//PNG
-
-if(btnExportPng && canvas){
-    btnExportPng.addEventListener('click',(e) => {
-        e.stopPropagation();
-        const imageURI = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.download = `pizarra-colaborativa-${Date.now()}.png`;
-        link.href = imageURI;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        registrarActividad(nombreUsuario,'Exportó la pizarra como imagen PNG');
-    });
-
-}
+    //PNG
 
 
-//Documento PDF
+    if(btnExportPng){
+        btnExportPng.addEventListener('click',(e) => {
+            e.stopPropagation();
+            const canvasLocal = document.getElementById('pizarraCanvas');
+            if(!canvasLocal) return;
+            const imageURI = canvasLocal.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `pizarra-colaborativa-${Date.now()}.png`;
+            link.href = imageURI;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
 
-if (btnExportPdf && canvas){
-
-    btnExportPdf.addEventListener('click',(e) => {
-        e.stopPropagation();
-        //Validar librería cargada
-        if(!window.jspdf){
-            alert('Falta cargar la librería jsPDF en el HTML');
-            return;
-        }
-
-        const { jsPDF } = window.jspdf;
-        const imageURI = canvas.toDataURL('image/png');
-
-        //PDF con dimensiones proporcionales del canvas
-
-        const pdf = new jsPDF({
-            orientation:canvas.width > canvas.height ? 'landscape' : 'portrait',
-            unit:'px',
-            format: [canvas.width , canvas.height]
+            registrarActividad(nombreUsuario || "Usuario",'Exportó la pizarra como imagen PNG');
         });
 
-        pdf.addImage(imageURI,'PNG', 0 , 0 , canvas.width , canvas.height);
-        pdf.save(`pizarra-colaborativa-${Date.now()}.pdf`);
+    }
 
-        registrarActividad(nombreUsuario,'Exportó la pizarra como documento PDF');
+    //Documento PDF
 
+    if (btnExportPdf){
+
+        btnExportPdf.addEventListener('click',(e) => {
+            e.stopPropagation();
+            //Validar librería cargada
+            if(!window.jspdf){
+                alert('Falta cargar la librería jsPDF en el HTML');
+                return;
+            }
+
+            const canvasLocal = document.getElementById('pizarraCanvas');
+            if(!canvasLocal) return;
+
+            const { jsPDF } = window.jspdf;
+            const imageURI = canvasLocal.toDataURL('image/png');
+
+            //PDF con dimensiones proporcionales del canvas
+
+            const pdf = new jsPDF({
+                orientation:canvasLocal.width > canvasLocal.height ? 'landscape' : 'portrait',
+                unit:'px',
+                format: [canvasLocal.width , canvasLocal.height]
+            });
+
+            pdf.addImage(imageURI,'PNG', 0 , 0 , canvasLocal.width , canvasLocal.height);
+            pdf.save(`pizarra-colaborativa-${Date.now()}.pdf`);
+
+            registrarActividad(nombreUsuario || "Usuario",'Exportó la pizarra como documento PDF');
+
+
+        });
+    
+    }
 
 });
-    
+
+//Funcion actualizar la lista de usuarios
+function actualizarListaUsuarios(usuarios){
+    if(!userListContainer || !userCountBadge)return;
+
+    userListContainer.innerHTML='';
+    userCountBadge.textContent = usuarios.length;
+
+    usuarios.forEach(usuario=>{
+        const li = document.createElement('li');
+        li.className = 'user-item';
+        //Validar si el usuario en la lista eres tu
+        const esTu = usuario === nombreUsuario ? '(Tú)' : '';
+        const esAnfitrionHTML = usuario === nombreUsuario
+        ? '<span class="role-badge" style="background:rgba(16,185,129,0.2); color:#34d399;padding:2px 6px; border-radius:4px;font-size:0.75rem;">Anfitrión</span>' 
+        : '<span class="role-badge" style="background:rgba(59,130,246,0.1); color:#93c5fd; padding:2px 6px; border-radius:4px; font-size:0.75rem;">Activos</span>';
+
+
+        li.innerHTML = `
+            <span><span class="user-indicator"></span>${usuario}${esTu}</span>
+            ${esAnfitrionHTML}
+        
+        `;
+        userListContainer.appendChild(li);
+    });
 }
 
+function configurarEventosSocketHistorial(){
+
+    const activeSocket = window.socket || (typeof socket !== 'undefined' ? socket : null);
+    if (!activeSocket) return;
+
+    //Cuando el ususario entra a la sala
+    activeSocket.on('user-joined', (data) => {
+        const nombre = data.nombre || "Un usuario";
+        //mostrarNotificacion(`${nombre} se unió a la sala`,'join');
+        registrarActividad('Sistema',`${nombre} entró a la sesión`);
+
+        if(data.usuarios){
+            actualizarListaUsuarios(data.usuarios);
+        }
+    });
+
+    //Cuando un usuario sale de la sala 
+    activeSocket.on('user-left',(data) => {
+        const nombre = data.nombre || "Un usuario";
+        //mostrarNotificacion(`${nombre} abandonó la sala`,'leave');
+        registrarActividad('Sistema',`${nombre} salió de la sesión`);
+
+        if(data.usuarios){
+            actualizarListaUsuarios(data.usuarios);
+        }
+    });
+
+    //Evento general para registrar trazos en el historial
+    activeSocket.on('draw-action',(data) => {
+        if(data && data.usuario){
+            registrarActividad(data.usuario,`dibujó un trazo (${data.tipo})`);
+        }
+    
+    });
+
+    //Si se limpia la pizarra
+    activeSocket.on("limpiar-pizarra", (data) => {
+        const autor = data?.usuario || "Un usuario";
+        registrarActividad(autor,"Limpió toda la pizarra");
+    });
+}
 
 
 //Gestión de participantes y notificaciones
@@ -124,7 +228,7 @@ if (btnExportPdf && canvas){
 
 
 //FUNCT mostrar notificaciones toast
-
+/*
 function mostrarNotificacion(mensaje, tipo = 'info'){
     if (!toastContaineer) return;
 
@@ -167,70 +271,5 @@ function mostrarNotificacion(mensaje, tipo = 'info'){
     },4000);
 
 }
-
-//Funcion actualizar la lista de usuarios
-function actualizarListaUsuarios(usuarios){
-    if(!userListContainer || !userCountBadge)return;
-
-    userListContainer.innerHTML='';
-    userCountBadge.textContent = usuarios.length;
-
-    usuarios.forEach(usuario=>{
-        const li = document.createElement('li');
-        li.className = 'user-item';
-        //Validar si el usuario en la lista eres tu
-        const esTu = usuario === nombreUsuario ? '(Tú)' : '';
-        const esAnfitrionHTML = usuario === nombreUsuario ? '<span class="role-badge">Anfitrión</span>' : '<span class="role-badge" style="background:rgba(59,130,246,0.1); color:#93c5fd;">Activos</span>';
-
-
-        li.innerHTML = `
-            <span><span class="user-indicator"></span>${usuario}${esTu}</span>
-            ${esAnfitrionHTML}
-        
-        `;
-        userListContainer.appendChild(li);
-    });
-
-
-}
-
-//Integracion con websocket
-
-//Cuando el ususario entra a la sala
-socket.on('user-joined', (data) => {
-    const nombre = data.nombre || "Un usuario";
-    mostrarNotificacion(`${data.nombre} se unió a la sala`,'join');
-    registrarActividad('Sistema',`${data.nombre} entró a la sesión`);
-
-    if(data.usuarios){
-        actualizarListaUsuarios(data.usuarios);
-    }
-});
-
-//Cuando un usuario sale de la sala 
-socket.on('user-left',(data) => {
-    const nombre = data.nombre || "Un usuario";
-    mostrarNotificacion(`${data.nombre} abandonó la sala`,'leave');
-    registrarActividad('Sistema',`${data.nombre} salió de la sesión`);
-
-    if(data.usuarios){
-        actualizarListaUsuarios(data.usuarios);
-    }
-});
-
-//Evento general para registrar trazos en el historial
-socket.on('draw-action',(data) => {
-    if(data && data.usuario){
-        registrarActividad(data.usuario,`dibujó un trazo (${data.tipo})`);
-    }
-    
-});
-
-//Si se limpia la pizarra
-socket.on("limpiar-pizarra", (data) => {
-    const autor = data?.usuario || "Un usuario";
-    registrarActividad(autor,"Limpió toda la pizarra");
-});
-
-
+*/
 

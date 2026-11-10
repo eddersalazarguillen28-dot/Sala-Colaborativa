@@ -9,6 +9,7 @@
 
     <link rel="stylesheet" href="../css/sala.css">
     <link rel="stylesheet" href="../css/pizarra.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body>
@@ -499,21 +500,27 @@
             </div>
 
             <div class="modal-body">
-                <!--Seccion participantes-->
-                <div class="seccion-participantes">
-                    <h4>Participantes (<span id="user-count">0</span>)</h4>
-                    <ul id="user-list"></ul>
+                <!--COLUMNA IZQUIERDA-->
+                <div class="seccion-izquierda">
+                    <!--Seccion participantes-->
+                    <div>
+                        <h4>Participantes (<span id="user-count">0</span>)</h4>
+                        <ul id="user-list"></ul>
+                    </div>
+
+                    <!--Seccion exportar pantalla-->
+                    <div class="seccion-exportar">
+                        <h4>Exportar pantalla</h4>
+                        <button id="btnExportarPng" type="button">Imagen PNG</button>
+                        <button id="btnExportarPdf" type="button">Documento PDF</button>
+
+                    </div>
+
                 </div>
 
-                <!--Seccion exportar pantalla-->
-                <div class="seccion-exportar">
-                    <h4>Exportar pantalla</h4>
-                    <button id="btnExportarPng" type="button">Imagen PNG</button>
-                    <button id="btnExportarPdf" type="button">Documento PDF</button>
+                
 
-                </div>
-
-                <!--Registro de actividades/historial-->
+                <!--COLUMNA DERECHA-->
                 <div class="seccion-registro">
                     <h4>Registro de eventos</h4>
                     <div id="historialActividades" class="mensajes-historial"></div>
@@ -533,7 +540,8 @@
     <script src="../javascripts/pizarra.js" defer></script>
     <script src="../javascripts/chat.js" defer></script>
     <script src="../javascripts/videollamada.js" defer></script>
-    
+    <!--------------------------------------------------------------------->
+    <script src="../javascripts/historial.js"defer></script>
 
 </body>
 
