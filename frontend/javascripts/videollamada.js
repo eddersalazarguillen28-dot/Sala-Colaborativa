@@ -708,7 +708,7 @@ if (!socketVideo) {
                 }
 
                 const restricciones = microfonoSeleccionado
-                    ? { audio: { deviceId: { exact: microfonoSeleccionado } }, video: false }
+                    ? { audio: { deviceId: { ideal: microfonoSeleccionado } }, video: false }
                     : { audio: true, video: false };
 
                 flujoAudio = await navigator.mediaDevices.getUserMedia(restricciones);
