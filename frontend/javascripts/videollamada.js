@@ -344,7 +344,11 @@ if (!socketVideo) {
                 const conexion = crearConexionWebRTC(idParticipante, true);
                 await agregarPistasAConexion(conexion);
 
-                const oferta = await conexion.createOffer();
+                const oferta = await conexion.createOffer({
+                    offerToReceiveAudio: true,
+                    offerToReceiveVideo: true
+                });
+                
                 await conexion.setLocalDescription(oferta);
                 if (!perteneceALaSala()) return;
 
