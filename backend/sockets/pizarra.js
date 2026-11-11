@@ -1,300 +1,314 @@
+
+"use strict";
+
 function configurarPizarra(io) {
 
-    // Validar colores hexadecimales
-    function colorValido(color) {
+    // ==========================================
+    // VALIDACIONES
+    // ==========================================
+
+    const esObjeto = v =>
+        v !== null &&
+        typeof v === "object" &&
+        !Array.isArray(v);
+
+    const numeroValido = v =>
+        Number.isFinite(v) && Math.abs(v) <= 1000000;
+
+    const idValido = v =>
+        typeof v === "string" &&
+        v.length > 0 &&
+        v.length <= 128;
+
+    const colorValido = v =>
+        typeof v === "string" &&
+        /^#[0-9a-fA-F]{6}$/.test(v);
+
+    const grosorValido = v =>
+        Number.isFinite(v) && v > 0 && v <= 200;
+
+    function puntosValidos(pts, permitirVacio = false) {
         return (
-            typeof color === "string" &&
-            /^#[0-9a-fA-F]{6}$/.test(color)
+            Array.isArray(pts) &&
+            pts.length <= 20000 &&
+            (permitirVacio || pts.length >= 2) &&
+            pts.length % 2 === 0 &&
+            pts.every(numeroValido)
         );
     }
 
-    // Validar coordenadas
-    function coordenadaValida(valor) {
-        return Number.isFinite(valor) && Math.abs(valor) <= 1000000;
-    }
+    // ==========================================
+    // VALIDAR OBJETOS DE LA PIZARRA
+    // ==========================================
 
-    // Validar grosor de pinceles y figuras
-    function grosorValido(grosor) {
-        return (
-            Number.isFinite(grosor) &&
-            grosor > 0 &&
-            grosor <= 50
-        );
-    }
+    function elementoValido(e) {
 
-    io.on("connection", (socket) => {
+        if (!esObjeto(e) || !idValido(e.id)) return false;
 
-        console.log(`Pizarra conectada: ${socket.id}`);
+        const tipos = [
+            "trazo",
+            "borrador",
+            "poligono",
+            "elipse",
+            "linea",
+            "texto"
+        ];
 
-        // ==========================================
-        // 1. RECIBIR Y VALIDAR TRAZOS
-        // ==========================================
+        if (!tipos.includes(e.t)) return false;
 
-        socket.on("dibujar-trazo", (datos = {}) => {
+        if (e.t === "texto") {
+            return (
+                numeroValido(e.x) &&
+                numeroValido(e.y) &&
+                typeof e.txt === "string" &&
+                e.txt.length <= 10000 &&
+                Number.isFinite(e.tam) &&
+                e.tam >= 6 &&
+                e.tam <= 200 &&
+                colorValido(e.c)
+            );
+        }
 
-            if (
-                !datos ||
-                typeof datos !== "object" ||
-                Array.isArray(datos)
-            ) {
-                socket.emit("error-pizarra", "Datos de dibujo inválidos");
-                return;
-            }
+        if (!grosorValido(e.g)) return false;
 
-            const { sala, trazo } = datos;
+        if (e.t === "borrador") {
+            return puntosValidos(e.pts);
+        }
 
-            if (
-                typeof sala !== "string" ||
-                !sala.trim() ||
-                !trazo ||
-                typeof trazo !== "object" ||
-                Array.isArray(trazo)
-            ) {
-                socket.emit("error-pizarra", "Datos de dibujo inválidos");
-                return;
-            }
+        if (e.t === "elipse") {
+            return (
+                numeroValido(e.x0) &&
+                numeroValido(e.y0) &&
+                numeroValido(e.x1) &&
+                numeroValido(e.y1) &&
+                colorValido(e.c) &&
+                (e.r === null || e.r === undefined || colorValido(e.r))
+            );
+        }
 
-            const nombreSala = sala.trim();
+        if (!puntosValidos(e.pts)) return false;
 
-            // Comprobar que pertenece a la sala
-            if (!socket.rooms.has(nombreSala)) {
-                socket.emit("error-pizarra", "No perteneces a esta sala");
-                return;
-            }
+        if (!colorValido(e.c)) return false;
 
-            // ======================================
-            // 2. VALIDAR TIPO DE TRAZO
-            // ======================================
+        if (
+            e.r !== null &&
+            e.r !== undefined &&
+            !colorValido(e.r)
+        ) return false;
 
-            const tipo = trazo.tipo || "normal";
+        if (e.t === "trazo") {
 
-            const tiposPermitidos = [
-                "normal",
-                "texto",
-                "relleno",
-                "forma",
-                "borrador"
+            const pinceles = [
+                "lapiz",
+                "pincel",
+                "aerografo",
+                "acuarela",
+                "oleo",
+                "marcador",
+                "crayon"
             ];
 
-            if (
-                typeof tipo !== "string" ||
-                !tiposPermitidos.includes(tipo)
-            ) {
-                socket.emit("error-pizarra", "Tipo de dibujo no permitido");
-                return;
-            }
-
-            let nuevoTrazo = {};
-
-            // ======================================
-            // 3. VALIDAR TEXTO
-            // ======================================
-
-            if (tipo === "texto") {
-
-                if (
-                    !coordenadaValida(trazo.x0) ||
-                    !coordenadaValida(trazo.y0) ||
-                    typeof trazo.texto !== "string" ||
-                    !trazo.texto.trim() ||
-                    trazo.texto.length > 500 ||
-                    !Number.isFinite(trazo.tamano) ||
-                    trazo.tamano < 8 ||
-                    trazo.tamano > 200 ||
-                    !colorValido(trazo.color)
-                ) {
-                    socket.emit("error-pizarra", "Datos de texto inválidos");
-                    return;
-                }
-
-                nuevoTrazo = {
-                    tipo: "texto",
-                    x0: trazo.x0,
-                    y0: trazo.y0,
-                    texto: trazo.texto,
-                    tamano: trazo.tamano,
-                    color: trazo.color
-                };
-            }
-
-            // ======================================
-            // 4. VALIDAR RELLENO
-            // ======================================
-
-            else if (tipo === "relleno") {
-
-                if (
-                    !coordenadaValida(trazo.x0) ||
-                    !coordenadaValida(trazo.y0) ||
-                    !colorValido(trazo.color)
-                ) {
-                    socket.emit("error-pizarra", "Datos de relleno inválidos");
-                    return;
-                }
-
-                nuevoTrazo = {
-                    tipo: "relleno",
-                    x0: trazo.x0,
-                    y0: trazo.y0,
-                    color: trazo.color
-                };
-            }
-
-            // ======================================
-            // 5. VALIDAR FIGURAS
-            // ======================================
-
-            else if (tipo === "forma") {
-
-                const formasPermitidas = [
-                    "rectangulo",
-                    "circulo",
-                    "linea",
-                    "triangulo",
-                    "flecha"
-                ];
-
-                if (
-                    !formasPermitidas.includes(trazo.forma) ||
-                    !coordenadaValida(trazo.x0) ||
-                    !coordenadaValida(trazo.y0) ||
-                    !coordenadaValida(trazo.x1) ||
-                    !coordenadaValida(trazo.y1) ||
-                    !colorValido(trazo.color) ||
-                    !grosorValido(trazo.grosor)
-                ) {
-                    socket.emit("error-pizarra", "Datos de figura inválidos");
-                    return;
-                }
-
-                nuevoTrazo = {
-                    tipo: "forma",
-                    forma: trazo.forma,
-                    x0: trazo.x0,
-                    y0: trazo.y0,
-                    x1: trazo.x1,
-                    y1: trazo.y1,
-                    color: trazo.color,
-                    grosor: trazo.grosor
-                };
-            }
-
-            // ======================================
-            // 6. VALIDAR BORRADOR
-            // ======================================
-
-            else if (tipo === "borrador") {
-
-                if (
-                    !coordenadaValida(trazo.x0) ||
-                    !coordenadaValida(trazo.y0) ||
-                    !coordenadaValida(trazo.x1) ||
-                    !coordenadaValida(trazo.y1) ||
-                    !grosorValido(trazo.grosor)
-                ) {
-                    socket.emit("error-pizarra", "Datos de borrador inválidos");
-                    return;
-                }
-
-                nuevoTrazo = {
-                    tipo: "borrador",
-                    x0: trazo.x0,
-                    y0: trazo.y0,
-                    x1: trazo.x1,
-                    y1: trazo.y1,
-                    grosor: trazo.grosor
-                };
-            }
-
-            // ======================================
-            // 7. VALIDAR LÁPIZ Y PINCELES
-            // ======================================
-
-            else {
-
-                const pincelesPermitidos = [
-                    "lapiz",
-                    "pincel",
-                    "aerografo",
-                    "acuarela",
-                    "oleo",
-                    "marcador",
-                    "crayon"
-                ];
-
-                const pincel = trazo.pincel || "lapiz";
-
-                if (
-                    !coordenadaValida(trazo.x0) ||
-                    !coordenadaValida(trazo.y0) ||
-                    !coordenadaValida(trazo.x1) ||
-                    !coordenadaValida(trazo.y1) ||
-                    !colorValido(trazo.color) ||
-                    !grosorValido(trazo.grosor) ||
-                    typeof pincel !== "string" ||
-                    !pincelesPermitidos.includes(pincel)
-                ) {
-                    socket.emit("error-pizarra", "Datos de pincel inválidos");
-                    return;
-                }
-
-                nuevoTrazo = {
-                    x0: trazo.x0,
-                    y0: trazo.y0,
-                    x1: trazo.x1,
-                    y1: trazo.y1,
-                    color: trazo.color,
-                    grosor: trazo.grosor,
-                    pincel
-                };
-            }
-
-            // ======================================
-            // 8. ENVIAR TRAZO A LOS PARTICIPANTES
-            // ======================================
-
-            socket.to(nombreSala).emit("nuevo-trazo", {
-                trazo: nuevoTrazo
-            });
-
-            console.log(
-                `[PIZARRA] Trazo "${tipo}" enviado a sala "${nombreSala}"`
+            return (
+                pinceles.includes(e.p) &&
+                Number.isFinite(e.s)
             );
+        }
+
+        if (e.t === "linea") {
+            return (
+                Number.isInteger(e.fl) &&
+                e.fl >= 0 &&
+                e.fl <= 2
+            );
+        }
+
+        return true;
+    }
+
+    // ==========================================
+    // VALIDAR OPERACIONES V2
+    // ==========================================
+
+    function operacionValida(t) {
+
+        if (!esObjeto(t) || t.v !== 2) return false;
+
+        switch (t.op) {
+
+            case "inicio":
+                return elementoValido(t.el);
+
+            case "pts":
+                return (
+                    idValido(t.id) &&
+                    puntosValidos(t.pts)
+                );
+
+            case "fin":
+            case "cancelar":
+                return idValido(t.id);
+
+            case "agregar":
+            case "actualizar":
+            case "estado":
+                return (
+                    Array.isArray(t.els) &&
+                    t.els.length <= 1000 &&
+                    (
+                        t.op !== "estado" ||
+                        idValido(t.rid)
+                    ) &&
+                    t.els.every(elementoValido)
+                );
+
+            case "eliminar":
+                return (
+                    Array.isArray(t.ids) &&
+                    t.ids.length <= 1000 &&
+                    t.ids.every(idValido)
+                );
+
+            case "pedir-estado":
+                return idValido(t.rid);
+
+            case "laser":
+                if (
+                    typeof t.u !== "string" ||
+                    !t.u.trim() ||
+                    t.u.length > 100
+                ) return false;
+
+                if (t.fin === true) return true;
+
+                return (
+                    numeroValido(t.x) &&
+                    numeroValido(t.y) &&
+                    colorValido(t.c)
+                );
+
+            default:
+                return false;
+        }
+    }
+
+    // ==========================================
+    // CONEXIÓN
+    // ==========================================
+
+    io.on("connection", socket => {
+
+        console.log("[PIZARRA] Conectado:", socket.id);
+
+        // ======================================
+        // RECIBIR OPERACIONES
+        // ======================================
+
+        socket.on("dibujar-trazo", datos => {
+
+            try {
+
+                if (
+                    !esObjeto(datos) ||
+                    typeof datos.sala !== "string" ||
+                    !datos.sala.trim() ||
+                    !esObjeto(datos.trazo)
+                ) {
+                    socket.emit(
+                        "error-pizarra",
+                        "Datos de dibujo inválidos"
+                    );
+                    return;
+                }
+
+                const sala = datos.sala.trim();
+                const trazo = datos.trazo;
+
+                if (!socket.rooms.has(sala)) {
+                    socket.emit(
+                        "error-pizarra",
+                        "No perteneces a esta sala"
+                    );
+                    return;
+                }
+
+                const contenido = JSON.stringify(trazo);
+
+                if (
+                    Buffer.byteLength(contenido, "utf8") > 250000
+                ) {
+                    socket.emit(
+                        "error-pizarra",
+                        "Mensaje de pizarra demasiado grande"
+                    );
+                    return;
+                }
+
+                if (!operacionValida(trazo)) {
+
+                    socket.emit(
+                        "error-pizarra",
+                        "Datos de operación V2 inválidos: " + (trazo.op || "desconocida")
+                    );
+
+                    return;
+                }
+
+                // Retransmitir al resto de participantes.
+                socket.to(sala).emit("nuevo-trazo", {
+                    trazo: trazo
+                });
+
+            } catch (error) {
+
+                console.error("[PIZARRA] Error:", error);
+
+                socket.emit(
+                    "error-pizarra",
+                    "Error procesando la operación de pizarra"
+                );
+            }
 
         });
 
-        // ==========================================
-        // 9. LIMPIAR LA PIZARRA
-        // ==========================================
+        // ======================================
+        // LIMPIAR PIZARRA
+        // ======================================
 
-        socket.on("limpiar-pizarra", (sala) => {
+        socket.on("limpiar-pizarra", sala => {
 
             if (
                 typeof sala !== "string" ||
                 !sala.trim()
             ) {
-                socket.emit("error-pizarra", "Nombre de sala inválido");
+                socket.emit(
+                    "error-pizarra",
+                    "Nombre de sala inválido"
+                );
                 return;
             }
 
             const nombreSala = sala.trim();
 
             if (!socket.rooms.has(nombreSala)) {
-                socket.emit("error-pizarra", "No perteneces a esta sala");
+                socket.emit(
+                    "error-pizarra",
+                    "No perteneces a esta sala"
+                );
                 return;
             }
 
-            // Notificar a todos los participantes
             io.to(nombreSala).emit("pizarra-limpiada");
 
             console.log(
-                `[PIZARRA] Sala "${nombreSala}" limpiada por ${socket.id}`
+                `[PIZARRA] Sala "${nombreSala}" limpiada`
             );
+        });
 
+        socket.on("disconnect", () => {
+            console.log("[PIZARRA] Desconectado:", socket.id);
         });
 
     });
-
 }
 
 module.exports = configurarPizarra;
