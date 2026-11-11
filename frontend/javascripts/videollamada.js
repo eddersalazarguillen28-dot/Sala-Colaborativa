@@ -217,6 +217,10 @@ if (!socketVideo) {
                 console.warn(`No se encontró el transceptor ${tipo}.`);
                 return;
             }
+
+            if (transceptor.direction === "recvonly") {
+                transceptor.direction = "sendrecv"
+            }
             await transceptor.sender.replaceTrack(pista || null);
         }
 
