@@ -52,6 +52,8 @@ if (!socketVideo) {
         let microfonoSeleccionado = "";
 
         const conexionesWebRTC = new Map();
+        window.conexionesWebRTC = conexionesWebRTC;
+        const flujosRemotos = new Map();
         const participantesVideo = new Map();
         const candidatosPendientes = new Map();
         const participantesActivosVideo = new Set();
@@ -212,10 +214,12 @@ if (!socketVideo) {
 
         async function actualizarPistaLocal(conexion, tipo, pista) {
             const transceptor = obtenerTransceptor(conexion, tipo);
+
             if (!transceptor) {
                 console.warn(`No se encontró el transceptor ${tipo}.`);
                 return;
             }
+
             await transceptor.sender.replaceTrack(pista || null);
         }
 
@@ -251,29 +255,36 @@ if (!socketVideo) {
 
             // El iniciador crea los canales de audio y video.
             // El receptor los obtiene al aplicar la oferta remota.
-            if (crearTransceptores) {
-                conexion.addTransceiver("audio", { direction: "sendrecv" });
-                conexion.addTransceiver("video", { direction: "sendrecv" });
-            }
+            conexion.addTransceiver("audio", { direction: "sendrecv" });
+            conexion.addTransceiver("video", { direction: "sendrecv" });
 
             // Recibir audio y video del participante remoto.
             conexion.ontrack = evento => {
                 const video = obtenerVideoRemoto(idParticipante);
                 if (!video) return;
 
-                if (evento.streams && evento.streams.length > 0) {
-                    video.srcObject = evento.streams[0];
-                } else {
-                    if (!video.srcObject) video.srcObject = new MediaStream();
-                    const existePista = video.srcObject.getTracks().some(
-                        pista => pista.id === evento.track.id
-                    );
-                    if (!existePista) video.srcObject.addTrack(evento.track);
+                let flujoRemoto = flujosRemotos.get(idParticipante);
+
+                if (!flujoRemoto) {
+                    flujoRemoto = new MediaStream();
+                    flujosRemotos.set(idParticipante, flujoRemoto);
                 }
+
+                const existePista = flujoRemoto.getTracks().some(
+                    pista => pista.id === evento.track.id
+                );
+
+                if (!existePista) {
+                    flujoRemoto.addTrack(evento.track);
+                }
+
+                video.srcObject = flujoRemoto;
+                video.muted = false;
 
                 video.play().catch(error => {
                     console.warn("No se pudo reproducir el medio remoto:", error);
                 });
+
                 actualizarNombreParticipante(idParticipante);
             };
 
@@ -343,7 +354,11 @@ if (!socketVideo) {
                 const conexion = crearConexionWebRTC(idParticipante, true);
                 await agregarPistasAConexion(conexion);
 
-                const oferta = await conexion.createOffer();
+                const oferta = await conexion.createOffer({
+                    offerToReceiveAudio: true,
+                    offerToReceiveVideo: true
+                });
+
                 await conexion.setLocalDescription(oferta);
                 if (!perteneceALaSala()) return;
 
@@ -707,7 +722,7 @@ if (!socketVideo) {
                 }
 
                 const restricciones = microfonoSeleccionado
-                    ? { audio: { deviceId: { exact: microfonoSeleccionado } }, video: false }
+                    ? { audio: { deviceId: { ideal: microfonoSeleccionado } }, video: false }
                     : { audio: true, video: false };
 
                 flujoAudio = await navigator.mediaDevices.getUserMedia(restricciones);
