@@ -162,17 +162,20 @@ function actualizarListaUsuarios(usuarios){
     userCountBadge.textContent = usuarios.length;
 
     usuarios.forEach(usuario=>{
+        const nombrePart = typeof usuario === 'object' ? (usuario.nombre || usuario.usuario || "Usuario") : usuario;
+
         const li = document.createElement('li');
         li.className = 'user-item';
+
         //Validar si el usuario en la lista eres tu
-        const esTu = usuario === nombreUsuario ? '(Tú)' : '';
-        const esAnfitrionHTML = usuario === nombreUsuario
+        const esTu = nombrePart === nombreUsuario ? '(Tú)' : '';
+        const esAnfitrionHTML = nombrePart === nombreUsuario
         ? '<span class="role-badge" style="background:rgba(16,185,129,0.2); color:#34d399;padding:2px 6px; border-radius:4px;font-size:0.75rem;">Anfitrión</span>' 
         : '<span class="role-badge" style="background:rgba(59,130,246,0.1); color:#93c5fd; padding:2px 6px; border-radius:4px; font-size:0.75rem;">Activos</span>';
 
 
         li.innerHTML = `
-            <span><span class="user-indicator"></span>${usuario}${esTu}</span>
+            <span><span class="user-indicator"></span>${nombrePart}${esTu}</span>
             ${esAnfitrionHTML}
         
         `;
@@ -185,9 +188,35 @@ function configurarEventosSocketHistorial(){
     const activeSocket = window.socket || (typeof socket !== 'undefined' ? socket : null);
     if (!activeSocket) return;
 
+    //Lista de participantes que emite pizarra.js
+    activeSocket.on('lista-participantes', (participantes) => {
+        if(Array.isArray(participantes)){
+            actualizarListaUsuarios(participantes);
+        }
+    });
+
+    activeSocket.on('nuevo-trazo',(datos) => {
+        const t = datos && datos.trazo;
+
+        if (t.op === 'agregar'){
+            registrarActividad('Colaborador', 'Agregó un elemento a la pizarra');
+        }else if (t.op === 'actualizar'){
+            registrarActividad('Colaborador', 'Modificó un elemento de la pizarra');
+        }else if(t.op === 'eliminar'){
+            registrarActividad('Colaborador','Eliminó un elemento de la pizarra');
+        }else if(t.op === 'inicio' && t.el){
+            const tipoTrazo = t.el.t === 'borrador' ? 'borrador' : 'trazo a mano alzada';
+            registrarActividad('Colaborador', `Comenzó a dibujar un ${tipoTrazo}`);
+        }
+    });
+
+    activeSocket.on('pizarra-limpiada',() =>{
+        registrarActividad('Sistema','Se limpió toda la pizarra');
+    });
+
     //Cuando el ususario entra a la sala
     activeSocket.on('user-joined', (data) => {
-        const nombre = data.nombre || "Un usuario";
+        const nombre = (typeof data === 'object' ? data.nombre : data) || "Un usuario";
         //mostrarNotificacion(`${nombre} se unió a la sala`,'join');
         registrarActividad('Sistema',`${nombre} entró a la sesión`);
 
@@ -198,7 +227,7 @@ function configurarEventosSocketHistorial(){
 
     //Cuando un usuario sale de la sala 
     activeSocket.on('user-left',(data) => {
-        const nombre = data.nombre || "Un usuario";
+        const nombre = (typeof data === 'object' ? data.nombre : data) || "Un usuario";;
         //mostrarNotificacion(`${nombre} abandonó la sala`,'leave');
         registrarActividad('Sistema',`${nombre} salió de la sesión`);
 
@@ -207,19 +236,6 @@ function configurarEventosSocketHistorial(){
         }
     });
 
-    //Evento general para registrar trazos en el historial
-    activeSocket.on('draw-action',(data) => {
-        if(data && data.usuario){
-            registrarActividad(data.usuario,`dibujó un trazo (${data.tipo})`);
-        }
-    
-    });
-
-    //Si se limpia la pizarra
-    activeSocket.on("limpiar-pizarra", (data) => {
-        const autor = data?.usuario || "Un usuario";
-        registrarActividad(autor,"Limpió toda la pizarra");
-    });
 }
 
 
