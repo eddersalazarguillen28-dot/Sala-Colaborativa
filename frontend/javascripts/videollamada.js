@@ -216,8 +216,17 @@ if (!socketVideo) {
             const transceptor = obtenerTransceptor(conexion, tipo);
 
             if (!transceptor) {
-                console.warn(`No se encontró el transceptor ${tipo}.`);
-                return;
+                throw new Error(`No se encontró el transceptor ${tipo}.`);
+            }
+
+            console.log(`Transceptor ${tipo}:`, {
+                direccion: transceptor.direction,
+                direccionActual: transceptor.currentDirection,
+                pista: pista ? pista.kind : null
+            });
+
+            if (pista && transceptor.direction === "recvonly") {
+                transceptor.direction = "sendrecv";
             }
 
             await transceptor.sender.replaceTrack(pista || null);
