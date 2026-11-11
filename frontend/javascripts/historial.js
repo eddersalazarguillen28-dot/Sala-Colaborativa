@@ -1,16 +1,6 @@
 
-//let socket;
 let nombreUsuario;
 let nombreSala;
-
-
-//const nombreUsuario = sessionStorage.getItem("nombreUsuario");
-//const nombreSala = sessionStorage.getItem("nombreSala");
-
-//SERVIDOR WEBSOCKETS 
-
-//Conectar al servidor
-//const socket = io();
 
 document.addEventListener("DOMContentLoaded",()=>{
     nombreUsuario = sessionStorage.getItem("nombreUsuario")||"Usuario";
@@ -21,14 +11,6 @@ document.addEventListener("DOMContentLoaded",()=>{
 
     const spanSala = document.getElementById("nombreSalaActual");
     if (spanSala) spanSala.textContent = `Sala: ${nombreSala}`;
-
-    /*if (typeof io != "undefined"){
-        socket = io();
-        socket.emit("unirse-sala",{nombreSala,nombreUsuario});
-        configurarEventosSocket();
-    }else{
-        console.error("Socket.io no está cargado");
-    }*/
 
     const btnAbrir = document.getElementById("btnAbrirHistorial");
     const btnCerrar = document.getElementById("CerrarHistorial");
@@ -198,7 +180,10 @@ function configurarEventosSocketHistorial(){
     activeSocket.on('nuevo-trazo',(datos) => {
         const t = datos && datos.trazo;
         if(!t) return;
-        procesarOperacionHistorial(t,'Colaborador');
+
+        const autorTrazo = datos.usuario || datos.nombre || "Colaborador";
+        
+        procesarOperacionHistorial(t,autorTrazo);
     });
 
     activeSocket.on('pizarra-limpiada',() =>{
@@ -238,12 +223,6 @@ function procesarOperacionHistorial(t,actor){
     }
 
 }
-
-
-
-
-//Gestión de participantes y notificaciones
-
 
 
 //FUNCT mostrar notificaciones toast
