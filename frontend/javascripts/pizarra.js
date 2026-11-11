@@ -298,7 +298,7 @@ function emitirOp(datos) {
     const usuarioActual = sessionStorage.getItem("nombreUsuario")||window.nombreUsuario||"Usuario";
     socket.emit("dibujar-trazo", {
         sala: salaPizarra,
-        usuario:usuarioPizarra,
+        usuario:usuarioActual,
         trazo: Object.assign({ v: 2 }, datos)
     });
 }
