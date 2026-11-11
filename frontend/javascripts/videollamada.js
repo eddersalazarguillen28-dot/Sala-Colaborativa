@@ -52,6 +52,7 @@ if (!socketVideo) {
         let microfonoSeleccionado = "";
 
         const conexionesWebRTC = new Map();
+        window.conexionesWebRTC = conexionesWebRTC;
         const participantesVideo = new Map();
         const candidatosPendientes = new Map();
         const participantesActivosVideo = new Set();
