@@ -255,6 +255,7 @@ function configurarPizarra(io) {
 
                 // Retransmitir al resto de participantes.
                 socket.to(sala).emit("nuevo-trazo", {
+                    usuario:datos.usuario || "Colaborador",
                     trazo: trazo
                 });
 

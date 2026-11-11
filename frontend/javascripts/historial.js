@@ -181,7 +181,7 @@ function configurarEventosSocketHistorial(){
         const t = datos && datos.trazo;
         if(!t) return;
 
-        const autorTrazo = datos.usuario || datos.nombre;
+        const autorTrazo = datos.usuario || datos.nombre || "Colaborador";
 
         procesarOperacionHistorial(t,autorTrazo);
     });

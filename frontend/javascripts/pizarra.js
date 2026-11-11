@@ -297,6 +297,7 @@ function aPantalla(x, y) {
 function emitirOp(datos) {
     socket.emit("dibujar-trazo", {
         sala: salaPizarra,
+        usuario:usuarioPizarra,
         trazo: Object.assign({ v: 2 }, datos)
     });
 }
