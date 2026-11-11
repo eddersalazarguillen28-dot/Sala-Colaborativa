@@ -197,17 +197,8 @@ function configurarEventosSocketHistorial(){
 
     activeSocket.on('nuevo-trazo',(datos) => {
         const t = datos && datos.trazo;
-
-        if (t.op === 'agregar'){
-            registrarActividad('Colaborador', 'Agregó un elemento a la pizarra');
-        }else if (t.op === 'actualizar'){
-            registrarActividad('Colaborador', 'Modificó un elemento de la pizarra');
-        }else if(t.op === 'eliminar'){
-            registrarActividad('Colaborador','Eliminó un elemento de la pizarra');
-        }else if(t.op === 'inicio' && t.el){
-            const tipoTrazo = t.el.t === 'borrador' ? 'borrador' : 'trazo a mano alzada';
-            registrarActividad('Colaborador', `Comenzó a dibujar un ${tipoTrazo}`);
-        }
+        if(!t) return;
+        procesarOperacionHistorial(t,'Colaborador');
     });
 
     activeSocket.on('pizarra-limpiada',() =>{
@@ -220,9 +211,7 @@ function configurarEventosSocketHistorial(){
         //mostrarNotificacion(`${nombre} se unió a la sala`,'join');
         registrarActividad('Sistema',`${nombre} entró a la sesión`);
 
-        if(data.usuarios){
-            actualizarListaUsuarios(data.usuarios);
-        }
+        if(data && data.usuarios) actualizarListaUsuarios(data.usuarios);
     });
 
     //Cuando un usuario sale de la sala 
@@ -231,12 +220,26 @@ function configurarEventosSocketHistorial(){
         //mostrarNotificacion(`${nombre} abandonó la sala`,'leave');
         registrarActividad('Sistema',`${nombre} salió de la sesión`);
 
-        if(data.usuarios){
-            actualizarListaUsuarios(data.usuarios);
-        }
+        if(data && data.usuarios) actualizarListaUsuarios(data.usuarios);
     });
 
 }
+
+function procesarOperacionHistorial(t,actor){
+    if (t.op === 'agregar' || t.op === 'estado'){
+        registrarActividad(actor , 'Agregó un elemento a la pizarra');
+    }else if (t.op === 'actualizar'){
+        registrarActividad(actor, 'Modificó un elemento de la pizarra');
+    }else if(t.op === 'eliminar'){
+        registrarActividad(actor,'Eliminó un elemento de la pizarra');
+    }else if(t.op === 'inicio' && t.el){
+        const tipoObjeto = t.el.t === 'borrador' ? 'borrador' : (t.el.t === 'poligono' || t.el.t === 'elipse' || t.el.t === 'linea' ? 'figura geométrica' : 'trazo');
+        registrarActividad(actor, `Comenzó a dibujar un ${tipoObjeto}`);
+    }
+
+}
+
+
 
 
 //Gestión de participantes y notificaciones
