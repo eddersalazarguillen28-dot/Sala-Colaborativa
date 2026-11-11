@@ -295,7 +295,7 @@ function aPantalla(x, y) {
 ================================================== */
 
 function emitirOp(datos) {
-    const usuarioActual = sessionStorage.getItem("nombreUsuario")||window.nombreUsuario||"Usuario";
+    const usuarioActual = sessionStorage.getItem("nombreUsuario")||"Usuario";
     socket.emit("dibujar-trazo", {
         sala: salaPizarra,
         usuario:usuarioActual,
