@@ -219,12 +219,6 @@ if (!socketVideo) {
                 return;
             }
 
-            // El canal de audio debe permitir enviar y recibir,
-            // incluso cuando la cámara esté apagada.
-            if (tipo === "audio") {
-                transceptor.direction = "sendrecv";
-            }
-
             await transceptor.sender.replaceTrack(pista || null);
         }
 
@@ -260,10 +254,8 @@ if (!socketVideo) {
 
             // El iniciador crea los canales de audio y video.
             // El receptor los obtiene al aplicar la oferta remota.
-            if (crearTransceptores) {
-                conexion.addTransceiver("audio", { direction: "sendrecv" });
-                conexion.addTransceiver("video", { direction: "sendrecv" });
-            }
+            conexion.addTransceiver("audio", { direction: "sendrecv" });
+            conexion.addTransceiver("video", { direction: "sendrecv" });
 
             // Recibir audio y video del participante remoto.
             conexion.ontrack = evento => {
