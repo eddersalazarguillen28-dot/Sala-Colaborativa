@@ -213,14 +213,18 @@ if (!socketVideo) {
 
         async function actualizarPistaLocal(conexion, tipo, pista) {
             const transceptor = obtenerTransceptor(conexion, tipo);
+
             if (!transceptor) {
                 console.warn(`No se encontró el transceptor ${tipo}.`);
                 return;
             }
 
-            if (transceptor.direction === "recvonly") {
-                transceptor.direction = "sendrecv"
+            // El canal de audio debe permitir enviar y recibir,
+            // incluso cuando la cámara esté apagada.
+            if (tipo === "audio") {
+                transceptor.direction = "sendrecv";
             }
+
             await transceptor.sender.replaceTrack(pista || null);
         }
 
