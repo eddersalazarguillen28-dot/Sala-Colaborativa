@@ -1,236 +1,218 @@
-# Pizarra Colaborativa en Tiempo Real
+# Sala Colaborativa
 
-Módulo de pizarra interactiva del proyecto de sala colaborativa. Permite dibujar, escribir, insertar formas, rellenar y editar contenido sobre un lienzo compartido, con sincronización en tiempo real entre los participantes mediante **Socket.IO**.
+Proyecto académico de una sala de trabajo colaborativa en tiempo real. Incluye pizarra interactiva, chat, videollamada, historial de actividad y exportación.
 
 > **Equipo:** Christopher, Jose, Estefanía, Edder
 
 ---
 
-## Tabla de contenido
+## ¿Qué es?
 
-1. [Descripción general](#descripción-general)
-2. [Características](#características)
-3. [Tecnologías utilizadas](#tecnologías-utilizadas)
-4. [Estructura del proyecto](#estructura-del-proyecto)
-5. [Requisitos previos](#requisitos-previos)
-6. [Instalación](#instalación)
-7. [Ejecución](#ejecución)
-8. [Uso de la pizarra](#uso-de-la-pizarra)
-9. [Atajos de teclado](#atajos-de-teclado)
-10. [Eventos de Socket.IO](#eventos-de-socketio)
-11. [Solución de problemas](#solución-de-problemas)
-12. [Pendientes](#pendientes)
-13. [Autor](#autor)
+Una aplicación web donde varias personas pueden entrar a una misma sala para trabajar juntas. Cada participante ve en su pantalla lo que hacen los demás al instante: dibujos en la pizarra, mensajes en el chat, video y audio de la videollamada, y un registro de las actividades de la sesión.
+
+Todo se comunica mediante un servidor en Node.js con Socket.IO, y la videollamada usa WebRTC directamente entre los navegadores.
 
 ---
 
-## Descripción general
+## ¿Qué se puede hacer?
 
-La pizarra colaborativa es un lienzo HTML5 (`<canvas>`) que permite a varios usuarios dibujar y editar contenido de forma simultánea dentro de una misma sala. Cada trazo, forma, texto o relleno se transmite a los demás participantes a través de **Socket.IO**, de modo que todos ven los cambios en tiempo real.
+### Sala
+- Ingresar con tu nombre y el nombre de la sala.
+- Ver quiénes están conectados en la lista de participantes.
+- Recibir avisos cuando alguien entra o sale.
+- Ver un historial con la hora de cada acción importante.
 
-El módulo forma parte de una **sala colaborativa** que también incluye videollamada, chat y lista de participantes. Este documento cubre únicamente la pizarra interactiva y su integración con el backend.
+### Pizarra
+- Dibujar con lápiz y borrador.
+- Elegir entre varios tipos de pincel: lápiz, pincel, aerógrafo, acuarela, óleo, marcador y crayón.
+- Cambiar el color y el grosor del trazo.
+- Dibujar formas: rectángulo, círculo, triángulo, rombo, estrella, línea y flechas.
+- Insertar texto con el tamaño que quieras.
+- Rellenar figuras con el bote de pintura.
+- Seleccionar objetos para moverlos, cambiarles el tamaño, girarlos, voltearlos, duplicarlos o eliminarlos.
+- Borrar objetos completos con un solo clic.
+- Señalar cosas con el puntero láser (lo ven todos).
+- Deshacer y rehacer.
+- Mover la pizarra y hacer zoom.
+- Mostrar u ocultar la cuadrícula.
+- Descargar la pizarra como imagen PNG.
+- Limpiar toda la pizarra (se limpia para todos).
 
----
+### Chat
+- Enviar y recibir mensajes de la sala en tiempo real.
+- Ver el nombre del autor y la hora de cada mensaje.
 
-## Características
+### Videollamada
+- Activar y desactivar micrófono.
+- Elegir entre varios micrófonos.
+- Ver una barra que indica el nivel de audio.
+- Activar y desactivar cámara.
+- Ver el video de los demás participantes.
+- Salir de la llamada.
 
-**Herramientas de dibujo**
-- Lápiz con 7 tipos de pincel: lápiz clásico, pincel, aerógrafo, acuarela, óleo, marcador y crayón.
-- Borrador con grosor ajustable.
-- Paleta de colores predefinida más selector de color personalizado.
-- Grosor de trazo ajustable de 1 a 30 px.
-
-**Formas geométricas**
-- Rectángulo, círculo/elipse, línea recta, triángulo y flecha.
-- Vista previa en vivo mientras se dibuja la forma.
-
-**Edición**
-- Bote de pintura (flood fill).
-- Insertar texto sobre el lienzo con tamaño personalizable.
-- Recortar, redimensionar y girar (90°, 180°, 270°) el área seleccionada.
-- Selección rectangular de áreas.
-
-**Historial y navegación**
-- Deshacer y rehacer (hasta 30 acciones).
-- Zoom de 25% a 400% con botones `+`, `−` y `1:1`.
-
-**Sincronización y exportación**
-- Sincronización en tiempo real con Socket.IO.
-- Limpiar pizarra para todos los participantes.
+### Historial y exportación
+- Registro con la hora de cada actividad de la sala.
 - Exportar la pizarra como imagen PNG.
-- Diseño responsive del canvas.
+- Exportar la pizarra como documento PDF.
 
 ---
 
-## Tecnologías utilizadas
+## ¿Qué se necesita?
 
-| Capa | Tecnología |
-|---|---|
-| Estructura | HTML5 |
-| Estilos | CSS3 |
-| Lógica cliente | JavaScript ES6+ (Canvas API, Pointer Events) |
-| Tiempo real | Socket.IO 4.8.4 |
-| Backend | Node.js + Express + Socket.IO |
+- Tener instalado **Node.js** (versión 16 o superior).
+- Un navegador actualizado (Chrome, Edge o Firefox).
+- Permiso para usar cámara y micrófono si se quiere usar la videollamada.
+- Para probar entre varias personas: abrir la sala en dos navegadores o en dos equipos conectados al mismo servidor.
 
 ---
 
-## Estructura del proyecto
-proyecto/
-├── views/
-│ └── sala.html # Vista de la sala colaborativa
-├── css/
-│ ├── sala.css # Estilos generales de la sala
-│ └── pizarra.css # Estilos de la pizarra
-├── javascripts/
-│ ├── sala.js # Lógica general de la sala
-│ ├── pizarra.js # Lógica de la pizarra
-│ ├── chat.js # Lógica del chat
-│ └── videollamada.js # Lógica de la videollamada
-└── server/
-└── server.js # Backend Node.js + Socket.IO
+## ¿Cómo se usa?
 
-text
+1. Instalar las dependencias del proyecto:
 
-El módulo de la pizarra se compone de `pizarra.js`, `pizarra.css` y la sección `<!-- PIZARRA -->` de `sala.html`.
-
----
-
-## Requisitos previos
-
-- Node.js ≥ 16 y npm ≥ 8.
-- Navegador moderno con soporte de Canvas 2D API, Pointer Events y WebSockets (Chrome, Edge o Firefox actualizados).
-
----
-
-## Instalación
-
-1. Clona el repositorio:
-
-Dependencias mínimas esperadas:
-
-json
-{
-  "dependencies": {
-    "express": "^4.x",
-    "socket.io": "^4.8.4"
-  }
-}
-Verifica la estructura de carpetas indicada en la sección anterior.
-
-Ejecución
-Levanta el backend:
+   ```bash
+   npm install
+Iniciar el servidor:
 
 bash
-node server/server.js
-Abre la aplicación en el navegador:
+npm start
+O en modo desarrollo (se reinicia solo al guardar cambios):
 
-Para probar la colaboración, abre la sala en dos pestañas o navegadores distintos, asegurándote de que ambas sesiones tengan el mismo nombreSala en sessionStorage.
+bash
+npm run dev
+Abrir en el navegador:
 
-Uso de la pizarra
-Herramienta	Descripción
-Lápiz	Dibujo libre con el pincel seleccionado.
-Borrador	Borra trazos existentes.
-Texto	Hace clic en el lienzo y pide el texto y el tamaño.
-Bote de pintura	Rellena un área cerrada con el color activo.
-Selector de pincel	Cambia entre 7 tipos de pincel.
-Selector de formas	Rectángulo, círculo, línea, triángulo o flecha.
-Selector de selección	Selección rectangular o libre.
-Recortar	Recorta el área seleccionada.
-Redimensionar	Cambia el tamaño del área seleccionada.
-Girar	Rota 90°, 180° o 270° el área seleccionada.
-Colores	Paleta rápida más selector personalizado.
-Grosor	Slider de 1 a 30 px.
-Deshacer / Rehacer	Navegación del historial.
-Zoom	Alejar, acercar o restablecer.
-Exportar PNG	Descarga la pizarra como imagen.
-Limpiar	Borra toda la pizarra (con confirmación).
-Flujo recomendado
+text
+http://localhost:3000
+En la pantalla de ingreso, escribir tu nombre y el nombre de la sala.
 
-Elige color y grosor.
+Compartir el mismo nombre de sala con tu equipo para que todos entren al mismo espacio.
 
-Selecciona la herramienta.
+Para probar que funciona entre varios: abrir la misma sala en otra pestaña o en otro navegador.
 
-Dibuja con clic sostenido sobre el canvas.
-
-Para editar un área: selecciona Selección → Rectangular, arrastra sobre el área y pulsa Recortar, Redimensionar o elige un ángulo de Girar.
-
+La pizarra
+Barra de herramientas
+Botón	Para qué sirve
+Mano	Mover la pizarra.
+Seleccionar	Seleccionar, mover y cambiar el tamaño de los objetos.
+Lápiz	Dibujar libremente con el pincel elegido.
+Borrador	Borrar trazos a mano.
+Borrar objeto	Quitar un dibujo completo al pasar por encima.
+Texto	Escribir sobre la pizarra.
+Bote	Rellenar una figura cerrada con color.
+Láser	Señalar algo y que todos lo vean.
+Pincel	Elegir el tipo de pincel.
+Formas	Elegir una figura geométrica.
+Colores	Elegir el color del trazo.
+Grosor	Elegir qué tan grueso se dibuja.
+Texto (tamaño)	Elegir el tamaño del texto.
+Girar	Rotar lo seleccionado 90°, 180° o 270°.
+Voltear	Voltear lo seleccionado en horizontal o vertical.
+Duplicar	Copiar lo seleccionado.
+Eliminar	Borrar lo seleccionado.
+Deshacer / Rehacer	Volver atrás o repetir una acción.
+Zoom	Acercar, alejar o ajustar la vista.
+Cuadrícula	Mostrar u ocultar la cuadrícula.
+Descargar	Guardar la pizarra como imagen.
+Limpiar	Borrar toda la pizarra.
+Ayuda	Ver los atajos y consejos de uso.
 Atajos de teclado
 Atajo	Acción
 Ctrl + Z	Deshacer
-Ctrl + Y	Rehacer
-Ctrl + Shift + Z	Rehacer (alternativo)
-Eventos de Socket.IO
-Cliente → Servidor (emit)
+Ctrl + Y / Ctrl + Shift + Z	Rehacer
+Ctrl + A	Seleccionar todo
+Ctrl + C / Ctrl + X / Ctrl + V	Copiar / cortar / pegar
+Ctrl + D	Duplicar lo seleccionado
+Supr	Eliminar lo seleccionado
+Esc	Cancelar la acción o quitar la selección
++ / -	Acercar / alejar
+0	Volver al 100%
+1	Ver todo el contenido
+Flechas	Mover la vista o lo seleccionado
+Espacio + arrastrar	Mover la pizarra
+V / H / P / E / D / T / B / L	Cambiar de herramienta
+Archivos del proyecto
+text
+proyecto/
+├── views/
+│   ├── index.html          # Pantalla de ingreso
+│   ├── sala.html           # Sala con pizarra, chat y videollamada
+│   ├── chat.html           # Chat (versión aparte)
+│   └── historial.html      # Historial (versión aparte)
+├── css/
+│   ├── index.css
+│   ├── sala.css
+│   ├── pizarra.css
+│   ├── chat.css
+│   └── historial.css
+├── javascripts/
+│   ├── index.js            # Lógica del ingreso
+│   ├── sala.js             # Inicializa la sala
+│   ├── pizarra.js          # Lógica de la pizarra
+│   ├── chat.js             # Lógica del chat
+│   ├── videollamada.js     # Lógica de la videollamada
+│   └── historial.js        # Lógica del historial
+├── server/
+│   ├── server.js           # Servidor principal
+│   └── sockets/
+│       ├── salas.js        # Manejo de salas y participantes
+│       └── pizarra.js      # Validación y envío de trazos
+├── package.json
+└── README.md
+¿Qué hace cada parte?
+server.js → levanta el servidor, configura Socket.IO y pasa los mensajes de WebRTC entre los participantes.
 
-Evento	Payload	Descripción
-unirse-sala	{ nombreSala, nombreUsuario }	Solicita unirse a una sala.
-dibujar-trazo	{ sala, trazo }	Envía un trazo, forma, texto o relleno.
-limpiar-pizarra	sala	Solicita limpiar la pizarra.
-Servidor → Cliente (on)
+salas.js → maneja la entrada y salida de las salas, la lista de participantes y el chat.
 
-Evento	Payload	Descripción
-sala-unida	{ sala }	Confirmación de unión.
-lista-participantes	[participantes]	Lista actualizada de participantes.
-nuevo-trazo	{ trazo }	Trazo de otro usuario.
-pizarra-limpiada	—	Notifica que la pizarra fue limpiada.
-Estructura del objeto trazo
+pizarra.js (servidor) → revisa que los trazos que llegan sean válidos y los reenvía a los demás participantes.
 
-Trazo de lápiz o borrador:
+pizarra.js (cliente) → es la parte más grande: dibuja, maneja las herramientas, la cámara, el zoom, la selección y el historial.
 
-json
-{
-  "x0": 100, "y0": 150,
-  "x1": 110, "y1": 160,
-  "color": "#000000",
-  "grosor": 4,
-  "pincel": "lapiz"
-}
-Forma geométrica:
+chat.js → muestra los mensajes y envía los nuevos.
 
-json
-{
-  "tipo": "forma",
-  "forma": "rectangulo",
-  "x0": 50, "y0": 50,
-  "x1": 200, "y1": 150,
-  "color": "#ef4444",
-  "grosor": 4
-}
-Texto:
+videollamada.js → activa el micrófono y la cámara y conecta a los participantes entre sí.
 
-json
-{
-  "tipo": "texto",
-  "x0": 80, "y0": 90,
-  "texto": "Hola equipo",
-  "tamano": 24,
-  "color": "#3b82f6"
-}
-Relleno:
+historial.js → registra las actividades de la sala y permite exportar a PNG o PDF.
 
-json
-{
-  "tipo": "relleno",
-  "x0": 120, "y0": 130,
-  "color": "#22c55e"
-}
-Handlers mínimos en el backend
+index.js → guarda el nombre del usuario y de la sala para entrar.
 
-javascript
-io.on("connection", (socket) => {
-  socket.on("unirse-sala", ({ nombreSala, nombreUsuario }) => {
-    socket.join(nombreSala);
-    socket.nombreSala = nombreSala;
-    socket.nombreUsuario = nombreUsuario;
-    socket.emit("sala-unida", { sala: nombreSala });
-  });
+¿Qué falta o se puede mejorar?
+Guardar la pizarra en el servidor para que no se pierda al cerrar la sala.
 
-  socket.on("dibujar-trazo", (datos) => {
-    socket.to(datos.sala).emit("nuevo-trazo", datos);
-  });
+Que el historial se guarde también en el servidor.
 
-  socket.on("limpiar-pizarra", (sala) => {
-    socket.to(sala).emit("pizarra-limpiada");
-  });
-});
-El cliente limpia localmente antes de emitir limpiar-pizarra, por eso el backend usa socket.to(...). Si se quiere que el emisor también reciba el eco, usar io.to(...).
+Mejorar la calidad de la videollamada con servidores TURN (hoy solo usa STUN).
+
+Que el chat y la pizarra estén también accesibles desde el móvil de forma más cómoda.
+
+Poder cambiar el nombre de la sala sin salir.
+
+Que cada sala tenga un enlace propio para compartir.
+
+Problemas comunes
+No puedo dibujar en la pizarra.
+Revisá que el contenedor de la pizarra tenga altura visible en la pantalla y que no esté tapado por otro elemento. En la consola del navegador se puede comprobar el tamaño del canvas.
+
+El botón de limpiar no borra.
+El cliente limpia la pizarra al instante en tu pantalla. Si los demás no lo ven, el servidor no está reenviando el aviso de limpieza.
+
+Los dibujos no les llegan a los demás.
+Verificá que todos estén en la misma sala y que el servidor esté corriendo. En la consola del navegador deben aparecer los mensajes del Socket.
+
+No se escucha ni se ve a los demás en la videollamada.
+Revisá que el navegador tenga permiso para usar cámara y micrófono. Si los equipos están en redes distintas, puede que haga falta un servidor TURN adicional (hoy solo hay STUN).
+
+El servidor no arranca.
+Asegurate de haber corrido npm install y de que el puerto 3000 esté libre. Se puede cambiar el puerto con la variable de entorno PORT.
+
+Se pierde la sesión al recargar.
+El nombre de usuario y de la sala se guardan en el sessionStorage del navegador. Si se cierra la pestaña, se pierde. Hay que volver a ingresar.
+
+Autor
+Proyecto académico de Sala Colaborativa.
+
+Edder → Frontend y pizarra interactiva.
+
+Christopher → Backend y comunicación con Socket.IO.
+
+Kooper y Estefanía → Módulos complementarios (chat, videollamada e historial).
