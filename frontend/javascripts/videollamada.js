@@ -53,6 +53,7 @@ if (!socketVideo) {
 
         const conexionesWebRTC = new Map();
         window.conexionesWebRTC = conexionesWebRTC;
+        const flujosRemotos = new Map();
         const participantesVideo = new Map();
         const candidatosPendientes = new Map();
         const participantesActivosVideo = new Set();
@@ -262,19 +263,28 @@ if (!socketVideo) {
                 const video = obtenerVideoRemoto(idParticipante);
                 if (!video) return;
 
-                if (evento.streams && evento.streams.length > 0) {
-                    video.srcObject = evento.streams[0];
-                } else {
-                    if (!video.srcObject) video.srcObject = new MediaStream();
-                    const existePista = video.srcObject.getTracks().some(
-                        pista => pista.id === evento.track.id
-                    );
-                    if (!existePista) video.srcObject.addTrack(evento.track);
+                let flujoRemoto = flujosRemotos.get(idParticipante);
+
+                if (!flujoRemoto) {
+                    flujoRemoto = new MediaStream();
+                    flujosRemotos.set(idParticipante, flujoRemoto);
                 }
+
+                const existePista = flujoRemoto.getTracks().some(
+                    pista => pista.id === evento.track.id
+                );
+
+                if (!existePista) {
+                    flujoRemoto.addTrack(evento.track);
+                }
+
+                video.srcObject = flujoRemoto;
+                video.muted = false;
 
                 video.play().catch(error => {
                     console.warn("No se pudo reproducir el medio remoto:", error);
                 });
+
                 actualizarNombreParticipante(idParticipante);
             };
 
@@ -348,7 +358,7 @@ if (!socketVideo) {
                     offerToReceiveAudio: true,
                     offerToReceiveVideo: true
                 });
-                
+
                 await conexion.setLocalDescription(oferta);
                 if (!perteneceALaSala()) return;
 
