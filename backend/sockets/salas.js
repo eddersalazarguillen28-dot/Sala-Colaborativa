@@ -63,6 +63,7 @@ function configurarSalas(io) {
             await socket.leave(nombreSala);
 
             salaActual = null;
+            socket.data.nombreUsuario = null;
 
             actualizarParticipantes(nombreSala);
 
@@ -135,10 +136,8 @@ function configurarSalas(io) {
 
                     if (salaActual === nombreSala) {
 
-                        nombresUsuarios.set(
-                            socket.id,
-                            nombreUsuario
-                        );
+                        nombresUsuarios.set(socket.id,nombreUsuario);
+                        socket.data.nombreUsuario=nombreUsuario;
 
                         actualizarParticipantes(nombreSala);
 
@@ -164,10 +163,8 @@ function configurarSalas(io) {
 
                     salaActual = nombreSala;
 
-                    nombresUsuarios.set(
-                        socket.id,
-                        nombreUsuario
-                    );
+                    nombresUsuarios.set(socket.id,nombreUsuario);
+                    socket.data.nombreUsuario = nombreUsuario;
 
                     console.log(
                         `🟢 ${nombreUsuario} se unió a ${nombreSala}`

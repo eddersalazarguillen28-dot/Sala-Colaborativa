@@ -224,16 +224,25 @@ function configurarPizarra(io) {
 
                 const sala = datos.sala.trim();
                 const trazo = datos.trazo;
-                const usuarioRemitente = (typeof datos.usuario === "string" && datos.usuario.trim())? datos.usuario.trim() : "Colaborador";
-                console.log("[Servidor] A punto de emitir nuevo-trazo con usuario:",usuarioRemitente);
 
-                if (!socket.rooms.has(sala)) {
-                    socket.emit(
-                        "error-pizarra",
-                        "No perteneces a esta sala"
-                    );
+                if (!socket.rooms.has(sala)){
+                    socket.emit("error-pizarra", "No perteneces a esta sala");
                     return;
                 }
+
+                const usuarioRemitente = socket.data.nombreUsuario;
+
+                if(
+                    typeof usuarioRemitente !== "string" || !usuarioRemitente.trim()
+                ){
+                    socket.emit("error-pizarra","No se pudo identificar al colaborador");
+                    return;
+                }
+
+                console.log("[Servidor] Nombre recibido:",{
+                    usuarioFinal:usuarioRemitente
+                });
+
 
                 const contenido = JSON.stringify(trazo);
 
@@ -260,6 +269,7 @@ function configurarPizarra(io) {
                 // Retransmitir al resto de participantes.
                 socket.to(sala).emit("nuevo-trazo", {
                     usuario:usuarioRemitente,
+                    nombreUsuario:usuarioRemitente,
                     trazo: trazo
                 });
 

@@ -179,12 +179,23 @@ function configurarEventosSocketHistorial(){
 
     activeSocket.on('nuevo-trazo',(datos) => {
         console.log("[Cliente historial]Datos recibidos del servidor:",datos);
+
         const t = datos && datos.trazo;
+
         if(!t) return;
 
-        const autorTrazo = datos.usuario || datos.nombre ||t.usuario ;
+        const autorTrazo = [
+        datos.nombreUsuario,
+        datos.usuario,
+        datos.trazo?.nombreUsuario,
+        datos.trazo?.usuario
+        ].find(nombre => typeof nombre === "string" && nombre.trim() !== "")
+        || "Usuario desconocido";
 
-        procesarOperacionHistorial(t,autorTrazo);
+        procesarOperacionHistorial(
+            datos.trazo,
+            autorTrazo.trim()
+        );
     });
 
     activeSocket.on('pizarra-limpiada',() =>{
@@ -192,21 +203,23 @@ function configurarEventosSocketHistorial(){
     });
 
     //Cuando el ususario entra a la sala
-    activeSocket.on('user-joined', (data) => {
-        const nombre = (typeof data === 'object' ? data.nombre : data) || "Un usuario";
-        //mostrarNotificacion(`${nombre} se unió a la sala`,'join');
-        registrarActividad('Sistema',`${nombre} entró a la sesión`);
-
-        if(data && data.usuarios) actualizarListaUsuarios(data.usuarios);
+    activeSocket.on("usuario-unido", (datos) => {
+        if(datos && datos.nombre){
+            registrarActividad(datos.nombre,"se unió a la sala");
+        }
     });
 
     //Cuando un usuario sale de la sala 
-    activeSocket.on('user-left',(data) => {
-        const nombre = (typeof data === 'object' ? data.nombre : data) || "Un usuario";;
-        //mostrarNotificacion(`${nombre} abandonó la sala`,'leave');
-        registrarActividad('Sistema',`${nombre} salió de la sesión`);
+    activeSocket.on('usuario-salido',(datos) => {
+        if(datos && datos.nombre){
+            registrarActividad(datos.nombre,"salió de la sala");
+        }
+    });
 
-        if(data && data.usuarios) actualizarListaUsuarios(data.usuarios);
+    activeSocket.on("usuario-desconectado",(datos)=>{
+        if(datos && datos.nombre){
+            registrarActividad(datos.nombre,"se desconectó");
+        }
     });
 
 }
