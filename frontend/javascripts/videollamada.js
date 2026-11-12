@@ -738,6 +738,13 @@ if (!socketVideo) {
 
                 flujoAudio = await navigator.mediaDevices.getUserMedia(restricciones);
                 pistaAudio = flujoAudio.getAudioTracks()[0];
+                console.log("PRUEBA MICRÓFONO:", {
+                    pista: pistaAudio,
+                    estado: pistaAudio.readyState,
+                    habilitada: pistaAudio.enabled,
+                    camaraActiva: !!flujoCamara
+                });
+                
                 if (!pistaAudio) throw new Error("No se pudo obtener la pista de audio.");
 
                 pistaAudio.enabled = true;
