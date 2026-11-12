@@ -169,6 +169,7 @@ if (!socketVideo) {
             if (!contenedorVideosRemotos) return null;
 
             let video = document.getElementById(`video-remoto-${idParticipante}`);
+
             if (video) return video;
 
             const tarjeta = document.createElement("div");
@@ -179,14 +180,21 @@ if (!socketVideo) {
             video.id = `video-remoto-${idParticipante}`;
             video.autoplay = true;
             video.playsInline = true;
-            video.muted = false;
+            video.muted = true;
+
+            const audio = document.createElement("audio");
+            audio.id = `audio-remoto-${idParticipante}`;
+            audio.autoplay = true;
 
             const nombre = document.createElement("span");
             nombre.textContent = participantesVideo.get(idParticipante) || "Participante";
 
             tarjeta.appendChild(video);
+            tarjeta.appendChild(audio);
             tarjeta.appendChild(nombre);
+
             contenedorVideosRemotos.appendChild(tarjeta);
+
             return video;
         }
 
@@ -264,13 +272,19 @@ if (!socketVideo) {
 
             // El iniciador crea los canales de audio y video.
             // El receptor los obtiene al aplicar la oferta remota.
-            conexion.addTransceiver("audio", { direction: "sendrecv" });
-            conexion.addTransceiver("video", { direction: "sendrecv" });
+            if (crearTransceptores) {
+                conexion.addTransceiver("audio", { direction: "sendrecv" });
+                conexion.addTransceiver("video", { direction: "sendrecv" });
+            }
 
             // Recibir audio y video del participante remoto.
             conexion.ontrack = evento => {
                 const video = obtenerVideoRemoto(idParticipante);
                 if (!video) return;
+
+                const audio = document.getElementById(
+                    `audio-remoto-${idParticipante}`
+                );
 
                 let flujoRemoto = flujosRemotos.get(idParticipante);
 
@@ -287,12 +301,23 @@ if (!socketVideo) {
                     flujoRemoto.addTrack(evento.track);
                 }
 
-                video.srcObject = flujoRemoto;
-                video.muted = false;
+                if (evento.track.kind === "audio") {
+                    if (audio) {
+                        audio.srcObject = new MediaStream([evento.track]);
 
-                video.play().catch(error => {
-                    console.warn("No se pudo reproducir el medio remoto:", error);
-                });
+                        audio.play().catch(error => {
+                            console.warn("No se pudo reproducir el audio remoto:", error);
+                        });
+                    }
+                }
+
+                if (evento.track.kind === "video") {
+                    video.srcObject = new MediaStream([evento.track]);
+
+                    video.play().catch(error => {
+                        console.warn("No se pudo reproducir el video remoto:", error);
+                    });
+                }
 
                 actualizarNombreParticipante(idParticipante);
             };
@@ -736,6 +761,13 @@ if (!socketVideo) {
 
                 flujoAudio = await navigator.mediaDevices.getUserMedia(restricciones);
                 pistaAudio = flujoAudio.getAudioTracks()[0];
+                console.log("PRUEBA MICRÓFONO:", {
+                    pista: pistaAudio,
+                    estado: pistaAudio.readyState,
+                    habilitada: pistaAudio.enabled,
+                    camaraActiva: !!flujoCamara
+                });
+
                 if (!pistaAudio) throw new Error("No se pudo obtener la pista de audio.");
 
                 pistaAudio.enabled = true;
