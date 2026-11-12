@@ -188,7 +188,8 @@ function configurarEventosSocketHistorial(){
             datos.nombreUsuario,
             datos.usuario,
             t.nombreUsuario,
-            t.usuario
+            t.usuario,
+            t.u
         ].find(nombre => 
             typeof nombre === "string" && nombre.trim() !== ""
         )|| "Usuario desconocido";
