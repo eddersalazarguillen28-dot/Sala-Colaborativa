@@ -178,6 +178,15 @@ function configurarEventosSocketHistorial(){
     });
 
     activeSocket.on('nuevo-trazo',(datos) => {
+        console.log("=====DIAGNOSTICO TRAZO======");
+        console.log("Objeto completo:",datos);
+        console.log("Claves recibidas:",Object.keys(datos||{}));
+
+        const t = datos?.trazo;
+
+        console.log("Trazo recibido:",t);
+        console.log("Nombre en datos.usuario:",datos?.usuario);
+        console.log("Nombre en datos.nombreUusario",datos?.nombreUsuario);
         console.log("Nombre en trazo.u:",t?.u);
         console.log("Nombre en trazo.usuario:",t?.usuario);
         console.log("Tipo de trazo.u:",typeof t?.u);
