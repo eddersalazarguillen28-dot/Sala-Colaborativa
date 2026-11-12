@@ -266,6 +266,15 @@ function configurarPizarra(io) {
                     return;
                 }
 
+                //PRUEBA
+                console.log("[Servidor] Antes de enviar:",{
+                    sala:sala,
+                    usuario:usuarioRemitente,
+                    nombreUsuario:usuarioRemitente,
+                    trazo:trazo
+                });
+                //////
+
                 // Retransmitir al resto de participantes.
                 socket.to(sala).emit("nuevo-trazo", {
                     usuario:usuarioRemitente,
