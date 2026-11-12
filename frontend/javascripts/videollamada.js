@@ -279,6 +279,12 @@ if (!socketVideo) {
 
             // Recibir audio y video del participante remoto.
             conexion.ontrack = evento => {
+                console.log("[ONTRACK Pista recibida:", {
+                    participante: idParticipante,
+                    tipo: evento.track.kind,
+                    estado: evento.track.readyState
+                });
+                
                 const video = obtenerVideoRemoto(idParticipante);
                 if (!video) return;
 
