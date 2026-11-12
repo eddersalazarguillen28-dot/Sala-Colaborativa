@@ -178,6 +178,7 @@ function configurarEventosSocketHistorial(){
     });
 
     activeSocket.on('nuevo-trazo',(datos) => {
+        console.log("[Cliente historial]Datos recibidos del servidor:",datos);
         const t = datos && datos.trazo;
         if(!t) return;
 

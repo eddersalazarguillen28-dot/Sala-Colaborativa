@@ -205,6 +205,8 @@ function configurarPizarra(io) {
 
         socket.on("dibujar-trazo", datos => {
 
+            console.log("[Servidor] Datos recibidos en dibujar-trazo:",datos);
+
             try {
 
                 if (
