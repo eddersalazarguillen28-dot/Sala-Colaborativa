@@ -3359,6 +3359,10 @@ socket.on("nuevo-trazo", datos => {
 
     if (!t || t.v !== 2) return;
 
+    if(datos.usuario){
+        t.usuario = datos.usuario;
+    }
+
     recibir(t);
 });
 
