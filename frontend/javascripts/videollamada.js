@@ -264,8 +264,10 @@ if (!socketVideo) {
 
             // El iniciador crea los canales de audio y video.
             // El receptor los obtiene al aplicar la oferta remota.
-            conexion.addTransceiver("audio", { direction: "sendrecv" });
-            conexion.addTransceiver("video", { direction: "sendrecv" });
+            if (crearTransceptores) {
+                conexion.addTransceiver("audio", { direction: "sendrecv" });
+                conexion.addTransceiver("video", { direction: "sendrecv" });
+            }
 
             // Recibir audio y video del participante remoto.
             conexion.ontrack = evento => {
