@@ -180,22 +180,21 @@ function configurarEventosSocketHistorial(){
     activeSocket.on('nuevo-trazo',(datos) => {
         console.log("[Cliente historial]Datos recibidos del servidor:",datos);
 
-        const t = datos && datos.trazo;
+        if(!datos || !datos.trazo)return;
 
-        if(!t) return;
+        const t = datos.trazo;
 
         const autorTrazo = [
-        datos.nombreUsuario,
-        datos.usuario,
-        datos.trazo?.nombreUsuario,
-        datos.trazo?.usuario
-        ].find(nombre => typeof nombre === "string" && nombre.trim() !== "")
-        || "Usuario desconocido";
+            datos.nombreUsuario,
+            datos.usuario,
+            t.nombreUsuario,
+            t.usuario
+        ].find(nombre => 
+            typeof nombre === "string" && nombre.trim() !== ""
+        )|| "Usuario desconocido";
 
-        procesarOperacionHistorial(
-            datos.trazo,
-            autorTrazo.trim()
-        );
+        console.log("[Cliente Historial] Autor identificado:",autorTrazo);
+        procesarOperacionHistorial(t,autorTrazo.trim());
     });
 
     activeSocket.on('pizarra-limpiada',() =>{
