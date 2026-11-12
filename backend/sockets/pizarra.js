@@ -224,6 +224,7 @@ function configurarPizarra(io) {
 
                 const sala = datos.sala.trim();
                 const trazo = datos.trazo;
+                const usuarioRemitente = (typeof datos.usuario === "string" && datos.usuario.trim())? datos.usuario.trim() : "Colaborador";
 
                 if (!socket.rooms.has(sala)) {
                     socket.emit(
@@ -257,7 +258,7 @@ function configurarPizarra(io) {
 
                 // Retransmitir al resto de participantes.
                 socket.to(sala).emit("nuevo-trazo", {
-                    usuario:datos.usuario || "Colaborador",
+                    usuario:usuarioRemitente,
                     trazo: trazo
                 });
 
