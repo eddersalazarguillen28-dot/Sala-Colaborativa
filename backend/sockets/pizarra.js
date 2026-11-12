@@ -225,6 +225,7 @@ function configurarPizarra(io) {
                 const sala = datos.sala.trim();
                 const trazo = datos.trazo;
                 const usuarioRemitente = (typeof datos.usuario === "string" && datos.usuario.trim())? datos.usuario.trim() : "Colaborador";
+                console.log("[Servidor] A punto de emitir nuevo-trazo con usuario:",usuarioRemitente);
 
                 if (!socket.rooms.has(sala)) {
                     socket.emit(
