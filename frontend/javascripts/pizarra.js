@@ -296,11 +296,11 @@ function aPantalla(x, y) {
 
 function emitirOp(datos) {
     console.log("[CLIENTE] Enviando operación de dibujo:", datos);
-
-    console.log("[CLIENTE] Socket conectado:",socket.connected);
+    const usuarioActual = usuarioPizarra || sessionStorage.getItem("nombreUsuario")||"Usuario";
 
     socket.emit("dibujar-trazo", {
         sala: salaPizarra,
+        usuario:usuarioActual,
         trazo: Object.assign({ v: 2 }, datos)
     });
 }
