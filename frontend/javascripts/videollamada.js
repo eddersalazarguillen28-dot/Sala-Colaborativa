@@ -7,6 +7,47 @@
 const socketVideo = window.socket;
 
 // ==========================================
+// CONSOLA VISUAL TEMPORAL PARA DEPURACIÓN
+// ==========================================
+
+const consolaVisual = document.createElement("div");
+
+consolaVisual.style.cssText = `
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    width: calc(100% - 20px);
+    max-height: 220px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.9);
+    color: #00ff00;
+    padding: 10px;
+    font-size: 11px;
+    z-index: 999999;
+    border-radius: 8px;
+    white-space: pre-wrap;
+    pointer-events: none;
+`;
+
+consolaVisual.textContent = "CONSOLA WEBRTC INICIADA";
+
+document.body.appendChild(consolaVisual);
+
+const logOriginal = console.log;
+
+console.log = (...datos) => {
+    logOriginal(...datos);
+
+    consolaVisual.textContent += "\n" + datos.map(dato =>
+        typeof dato === "object"
+            ? JSON.stringify(dato)
+            : String(dato)
+    ).join(" ");
+
+    consolaVisual.scrollTop = consolaVisual.scrollHeight;
+};
+
+// ==========================================
 // ELEMENTOS HTML
 // ==========================================
 
