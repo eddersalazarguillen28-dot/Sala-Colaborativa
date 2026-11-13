@@ -233,7 +233,8 @@ if (!socketVideo) {
                 pista: pista ? pista.kind : null
             });
 
-            if (pista && transceptor.direction === "recvonly") {
+            // CAMBIO 1: se quitó "pista &&" para que el receptor siempre responda en sendrecv.
+            if (transceptor.direction === "recvonly") {
                 transceptor.direction = "sendrecv";
             }
 
@@ -258,7 +259,6 @@ if (!socketVideo) {
                 }
             });
         }
-
         // ==========================================
         // CREAR CONEXIÓN WEBRTC
         // ==========================================
@@ -595,6 +595,9 @@ if (!socketVideo) {
             ofertasEnProceso.delete(idParticipante);
             respuestasEnProceso.delete(idParticipante);
 
+            // CAMBIO 2: borrar el flujo remoto viejo.
+            flujosRemotos.delete(idParticipante);
+
             const tarjetaVideo = document.getElementById(`participante-video-${idParticipante}`);
             if (tarjetaVideo) {
                 const video = tarjetaVideo.querySelector("video");
@@ -647,7 +650,6 @@ if (!socketVideo) {
             );
 
         });
-
         // ==========================================
         // BUSCAR MICRÓFONOS
         // ==========================================
