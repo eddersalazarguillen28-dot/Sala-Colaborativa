@@ -178,7 +178,7 @@ function configurarEventosSocketHistorial(){
     });
 
     activeSocket.on('nuevo-trazo',(datos) => {
-        console.log("=====DIAGNOSTICO TRAZO======");
+        /*console.log("=====DIAGNOSTICO TRAZO======");
         console.log("Objeto completo:",datos);
         console.log("Claves recibidas:",Object.keys(datos||{}));
 
@@ -204,8 +204,8 @@ function configurarEventosSocketHistorial(){
         console.log("AUTOR FINAL:",autorTrazo);
 
         if(!t) return;
-        procesarOperacionHistorial(t,autorTrazo.trim());
-        /*console.log("[Cliente historial]Datos recibidos del servidor:",datos);
+        procesarOperacionHistorial(t,autorTrazo.trim());*/
+        console.log("[Cliente historial]Datos recibidos del servidor:",datos);
 
         if(!datos || !datos.trazo)return;
 
@@ -222,7 +222,7 @@ function configurarEventosSocketHistorial(){
         )|| "Usuario desconocido";
 
         console.log("[Cliente Historial] Autor identificado:",autorTrazo);
-        procesarOperacionHistorial(t,autorTrazo.trim());*/
+        procesarOperacionHistorial(t,autorTrazo.trim());
     });
 
     activeSocket.on('pizarra-limpiada',() =>{
