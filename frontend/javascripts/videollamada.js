@@ -284,7 +284,7 @@ if (!socketVideo) {
                     tipo: evento.track.kind,
                     estado: evento.track.readyState
                 });
-                
+
                 const video = obtenerVideoRemoto(idParticipante);
                 if (!video) return;
 
@@ -307,23 +307,20 @@ if (!socketVideo) {
                     flujoRemoto.addTrack(evento.track);
                 }
 
-                if (evento.track.kind === "audio") {
-                    if (audio) {
-                        audio.srcObject = new MediaStream([evento.track]);
+                // Utilizar el mismo flujo remoto para audio y video.
+                video.srcObject = flujoRemoto;
 
-                        audio.play().catch(error => {
-                            console.warn("No se pudo reproducir el audio remoto:", error);
-                        });
-                    }
-                }
+                if (audio) {
+                    audio.srcObject = flujoRemoto;
 
-                if (evento.track.kind === "video") {
-                    video.srcObject = new MediaStream([evento.track]);
-
-                    video.play().catch(error => {
-                        console.warn("No se pudo reproducir el video remoto:", error);
+                    audio.play().catch(error => {
+                        console.warn("No se pudo reproducir el audio remoto:", error);
                     });
                 }
+
+                video.play().catch(error => {
+                    console.warn("No se pudo reproducir el video remoto:", error);
+                });
 
                 actualizarNombreParticipante(idParticipante);
             };
