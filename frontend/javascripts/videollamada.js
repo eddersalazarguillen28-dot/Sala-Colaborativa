@@ -26,7 +26,7 @@ consolaVisual.style.cssText = `
     z-index: 999999;
     border-radius: 8px;
     white-space: pre-wrap;
-    pointer-events: none;
+    pointer-events: auto;
 `;
 
 consolaVisual.textContent = "CONSOLA WEBRTC INICIADA";
