@@ -106,34 +106,21 @@ if (!socketVideo) {
             participantesActivosVideo.clear();
 
             participantes.forEach((id) => {
-
                 if (id !== socketVideo.id) {
                     participantesActivosVideo.add(id);
                 }
-
             });
 
-            // Mostrar el botón para salir y ocultar el de entrada.
             if (btnEntrarLlamada) btnEntrarLlamada.hidden = true;
             if (btnSalirLlamada) btnSalirLlamada.hidden = false;
 
-            // Conectar con los participantes que ya están en la llamada.
-            participantesActivosVideo.forEach((id) => {
-
-                if (
-                    participantesVideo.has(id) &&
-                    socketVideo.id.localeCompare(id) < 0
-                ) {
-                    iniciarConexionComoEmisor(id);
-                }
-
-            });
+            // Intentar conectar con los participantes ya conocidos.
+            conectarParticipantesActivos();
 
             console.log(
                 "Participantes activos en videollamada:",
                 Array.from(participantesActivosVideo)
             );
-
         });
 
         socketVideo.on("sala-unida", (datos) => {
@@ -200,6 +187,19 @@ if (!socketVideo) {
                 typeof socketVideo.id === "string" &&
                 Boolean(salaVideo) &&
                 Boolean(usuarioVideo);
+        }
+
+        function conectarParticipantesActivos() {
+            if (!perteneceALaSala()) return;
+
+            participantesActivosVideo.forEach((id) => {
+                if (
+                    participantesVideo.has(id) &&
+                    socketVideo.id.localeCompare(id) < 0
+                ) {
+                    iniciarConexionComoEmisor(id)
+                }
+            })
         }
 
         // ==========================================
@@ -325,7 +325,7 @@ if (!socketVideo) {
                     tipo: evento.track.kind,
                     estado: evento.track.readyState
                 });
-                
+
                 const video = obtenerVideoRemoto(idParticipante);
                 if (!video) return;
 
@@ -570,18 +570,7 @@ if (!socketVideo) {
             participantesVideo.clear();
             const idsActuales = new Set();
 
-            participantes.forEach(participante => {
-                if (!participante ||
-                    typeof participante.id !== "string" ||
-                    participante.id === socketVideo.id) return;
-
-                idsActuales.add(participante.id);
-
-                participantesVideo.set(
-                    participante.id,
-                    participante.nombre || "Participante"
-                );
-            });
+            conectarParticipantesActivos();
 
             // Actualizar nombres de participantes.
             participantesVideo.forEach((nombre, id) => {
