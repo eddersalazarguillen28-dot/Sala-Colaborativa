@@ -295,6 +295,9 @@ function aPantalla(x, y) {
 ================================================== */
 
 function emitirOp(datos) {
+    console.log("[CLIENTE] Enviando operación de dibujo:", datos);
+
+    console.log("[CLIENTE] Socket conectado:",socket.connected);
 
     socket.emit("dibujar-trazo", {
         sala: salaPizarra,
