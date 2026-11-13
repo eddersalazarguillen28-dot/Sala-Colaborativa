@@ -2,6 +2,13 @@
 let nombreUsuario;
 let nombreSala;
 
+//Seleccion de elementos del DOM
+const historialContainer = document.getElementById('historialActividades');
+const userListContainer = document.getElementById('user-list');
+const userCountBadge = document.getElementById('user-count');
+
+const MAX_EVENTOS = 500;
+
 document.addEventListener("DOMContentLoaded",()=>{
     nombreUsuario = sessionStorage.getItem("nombreUsuario")||"Usuario";
     nombreSala = sessionStorage.getItem("nombreSala")||"Principal";
@@ -12,6 +19,7 @@ document.addEventListener("DOMContentLoaded",()=>{
     const spanSala = document.getElementById("nombreSalaActual");
     if (spanSala) spanSala.textContent = `Sala: ${nombreSala}`;
 
+    //ABRIR Y CERRAR MODAL
     const btnAbrir = document.getElementById("btnAbrirHistorial");
     const btnCerrar = document.getElementById("CerrarHistorial");
     const modal = document.getElementById("modalHistorial");
@@ -37,39 +45,92 @@ document.addEventListener("DOMContentLoaded",()=>{
         });
     }
 
-    registrarActividad('Sistema',`Te uniste a "${nombreSala}" como ${nombreUsuario}`);
-
+    //registrarActividad('Sistema',`Te uniste a "${nombreSala}" como ${nombreUsuario}`);
+    configurarExportaciones();
     configurarEventosSocketHistorial();
 
 
 });
 
 
-//Seleccion de elementos del DOM
-const historialContainer = document.getElementById('historialActividades');
-const userListContainer = document.getElementById('user-list');
-const userCountBadge = document.getElementById('user-count');
+
 
 //const canvas = document.getElementById('pizarraCanvas');
 
 //FUNCT que registra un nuevo evento en el historial
-function registrarActividad(usuario,accion){
+function registrarActividad(usuario,accion,fecha){
     if(!historialContainer)return;
 
-    const ahora = new Date();
-    const horaFormateada = ahora.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const momento = fecha ? new Date(fecha) : new Date();
+    const hora = momento.toLocaleTimeString([],{
+        hour:'2-digit',
+        minute:'2-digit',
+        second:'2-digit'
+    });
 
     //Estructura tarjeta historial
-    const item = document.createElement('div');
-    item.className = 'historial-item';
+    const item = document.createElement("div");
+    item.className = "historial-item";
     item.style.cssText = "margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.05);padding-bottom:4px;";
-    item.innerHTML = `
-        <span style = "color:#64748b;font-size:0.75rem;">[${horaFormateada}]</span>
-        <p style = "margin:2px 0 0 0;color:#cbd5e1;"><strong>${usuario}:</strong> ${accion}</p>
-    `;
+
+    const spanHora = document.createElement("span");
+    spanHora.style.cssText = "color:#64748b;font-size:0.75rem;";
+    spanHora.textContent = `[${hora}]`;
+
+    const p = document.createElement("p");
+    p.style.cssText = "margin:2px 0 0 0;color:#cbd5e1;";
+
+    const autor=document.createElement("strong");
+    autor.textContent=`${usuario}`;
+
+    p.append(autor,` ${accion}`);
+    item.append(spanHora,p);
+
     //Insertar al inicio(mas reciente arriba
     historialContainer.prepend(item);
 
+    while(historialContainer.children.length > MAX_EVENTOS){
+        historialContainer.lastElementChild.remove();
+    }
+
+}
+
+function avisarExportacion(formato){
+    const s = window.socket;
+
+    if (s && s.connected){
+        s.emit("registrar-exportacion",{ sala: nombreSala,formato});
+    }else{
+        registrarActividad(nombreUsuario || "Usuario",`Exportó la pizarra como ${formato}`);
+    }
+}
+
+function configurarExportaciones(){
+    const btnExportPng = document.getElementById('btnExportarPng');
+    const btnExportPdf = document.getElementById('btnExportarPdf');
+    //PNG
+
+
+    if(btnExportPng){
+        btnExportPng.addEventListener('click',(e) => {
+            e.stopPropagation();
+
+            const canvasLocal = document.getElementById('pizarraCanvas');
+            if(!canvasLocal) return;
+
+            const link = document.createElement('a');
+            link.download = `pizarra-colaborativa-${Date.now()}.png`;
+            link.href = canvasLocal.toDataURL("image/png");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            avisarExportacion("PNG");
+
+        });
+    }
+
+    ///////////////////////////////////
 }
 
 //Exportación a PNG y PDF 

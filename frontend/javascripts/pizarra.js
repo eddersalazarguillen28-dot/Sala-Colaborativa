@@ -1,4 +1,7 @@
 "use strict";
+
+const { Socket } = require("node:dgram");
+
 /* ==================================================
    1. CANVAS PRINCIPAL
 ================================================== */
@@ -2969,6 +2972,9 @@ function exportarPNG() {
 
         document.body.appendChild(enlace);
         enlace.click();
+        ///////////////////////////////////////////////////////////////////////
+        socket.emit("registrar-exportacion",{sala:salaPizarra,formato:"PNG"});
+        ///////////////////////////////////////////////////////////////////////
         enlace.remove();
 
         setTimeout(() => URL.revokeObjectURL(url), 2000);

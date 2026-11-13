@@ -37,6 +37,75 @@ function configurarPizarra(io) {
         );
     }
 
+    /////////////////////////////////////////////////
+    function registrar(sala,usuario,accion){
+        io.to(sala).emit("registro-actividad",{
+            usuario,
+            accion,
+            fecha:new Date().toISOString()
+        });
+            
+        
+    }
+
+    function nombreElemento(tipo){
+        if(tipo === "poligono" || tipo === "elipse" || tipo === "linea"){
+            return "una figura geométrica";
+        }
+        if(tipo === "texto") return "un texto";
+        return "un trazo";
+    }
+
+    function accionDeOperacion(socket,t){
+        if(!socket.data.trazosEnCurso)socket.data.trazosEnCurso = new Map();
+        const enCurso = socket.data.trazosEnCurso;
+
+        switch(t.op){
+
+            case "inicio":
+                if(enCurso.size > 50) enCurso.clear();
+                enCurso.set(t.el.id, t.el.t);
+                return null;
+        
+            case "cancelar":
+                enCurso.delete(t.id);
+                return null;
+
+            case "fin":{
+                const tipo = enCurso.get(t.id);
+                enCurso.delete(t.id);
+                if(!tipo)return null;
+                return tipo === "borrador"
+                    ? "Usó el borrador"
+                    : `Dibujó ${nombreElemento(tipo)}`;
+            }
+            case "agregar":
+                if(!t.els.length)return null;
+                return t.els.length === 1
+                    ? `Agregó ${nombreElemento(t.els[0].t)}`
+                    : `Agregó ${t.els.length} elementos`;
+        
+            case "actualizar":
+                if(!t.els.length)return null;
+                return t.els.length === 1
+                    ? "Modificó un elemento"
+                    : `Modificó ${t.els.length} elementos`;
+        
+            case "eliminar":
+                if(!t.ids.length) return null;
+                return t.ids.length === 1
+                    ? "Eliminó un elemento"
+                    : `Eliminó ${t.ids.length} elementos`;
+            default:
+                return null;
+        }
+        
+
+    }
+
+    
+
+
     // ==========================================
     // VALIDAR OBJETOS DE LA PIZARRA
     // ==========================================
@@ -284,6 +353,11 @@ function configurarPizarra(io) {
                     trazo: trazo
                 });
 
+                //////////////////////////////////////////////////
+                const accion = accionDeOperacion(socket,trazo);
+                if(accion)registrar(sala,usuarioRemitente,accion);
+                //////////////////////////////////////////////////
+
             } catch (error) {
 
                 console.error("[PIZARRA] Error:", error);
@@ -325,10 +399,37 @@ function configurarPizarra(io) {
 
             io.to(nombreSala).emit("pizarra-limpiada");
 
+            ///////////////////////////////////////////////
+            registrar(
+                nombreSala,
+                socket.data.nombreUsuario || "Usuario",
+                "Limpió toda la pizarra"
+            );
+            ////////////////////////////////////////////////
+
             console.log(
                 `[PIZARRA] Sala "${nombreSala}" limpiada`
             );
         });
+
+        /////////////////////////////////////////////////////////////////////////////
+        socket.on("registrar-exportacion",datos => {
+
+            if (!esObjeto(datos)) return;
+
+            const sala = typeof datos.sala === "string" ? datos.sala.trim() : "";
+            const formato = datos.formato;
+
+            if(!sala || !socket.rooms.has(sala)) return;
+            if(formato !== "PNG" && formato !== "PDF") return;
+
+            const usuario = socket.data.nombreUsuario;
+            if (typeof usuario !== "string" || !usuario.trim()) return;
+
+            registrar(sala,usuario,`Exportó la pizarra como ${formato}`);
+        });
+
+        /////////////////////////////////////////////////////////////////////////////////
 
         socket.on("disconnect", () => {
             console.log("[PIZARRA] Desconectado:", socket.id);
