@@ -126,15 +126,50 @@ function configurarExportaciones(){
             document.body.removeChild(link);
 
             avisarExportacion("PNG");
-
         });
     }
 
-    ///////////////////////////////////
+    if (btnExportPdf){
+
+        btnExportPdf.addEventListener('click',(e) => {
+            e.stopPropagation();
+            //Validar librería cargada
+            if(!window.jspdf){
+                alert('Falta cargar la librería jsPDF en el HTML');
+                return;
+            }
+
+            const canvasLocal = document.getElementById('pizarraCanvas');
+            if(!canvasLocal) return;
+
+            const { jsPDF } = window.jspdf;
+            const imageURI = canvasLocal.toDataURL('image/png');
+
+            //PDF con dimensiones proporcionales del canvas
+
+            const pdf = new jsPDF({
+                orientation:canvasLocal.width > canvasLocal.height ? 'landscape' : 'portrait',
+                unit:'px',
+                format: [canvasLocal.width , canvasLocal.height]
+            });
+
+            pdf.addImage(imageURI,'PNG', 0 , 0 , canvasLocal.width , canvasLocal.height);
+            pdf.save(`pizarra-colaborativa-${Date.now()}.pdf`);
+
+            avisarExportacion("PDF");
+
+
+        });
+    
+    }
+
+    
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 //Exportación a PNG y PDF 
-document.addEventListener("DOMContentLoaded",() => {
+/*document.addEventListener("DOMContentLoaded",() => {
     const btnExportPng = document.getElementById('btnExportarPng');
     const btnExportPdf = document.getElementById('btnExportarPdf');
 
@@ -149,12 +184,12 @@ document.addEventListener("DOMContentLoaded",() => {
             const imageURI = canvasLocal.toDataURL('image/png');
             const link = document.createElement('a');
             link.download = `pizarra-colaborativa-${Date.now()}.png`;
-            link.href = imageURI;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
-            registrarActividad(nombreUsuario || "Usuario",'Exportó la pizarra como imagen PNG');
+            registrarActividad(nombreU            link.href = imageURI;
+suario || "Usuario",'Exportó la pizarra como imagen PNG');
         });
 
     }
@@ -195,33 +230,47 @@ document.addEventListener("DOMContentLoaded",() => {
     
     }
 
-});
+});*/
 
 //Funcion actualizar la lista de usuarios
 function actualizarListaUsuarios(usuarios){
     if(!userListContainer || !userCountBadge)return;
 
-    userListContainer.innerHTML='';
+    userListContainer.innerHTML="";
     userCountBadge.textContent = usuarios.length;
 
-    usuarios.forEach(usuario=>{
-        const nombrePart = typeof usuario === 'object' ? (usuario.nombre || usuario.usuario || "Usuario") : usuario;
-
-        const li = document.createElement('li');
-        li.className = 'user-item';
-
-        //Validar si el usuario en la lista eres tu
-        const esTu = nombrePart === nombreUsuario ? '(Tú)' : '';
-        const esAnfitrionHTML = nombrePart === nombreUsuario
-        ? '<span class="role-badge" style="background:rgba(16,185,129,0.2); color:#34d399;padding:2px 6px; border-radius:4px;font-size:0.75rem;">Anfitrión</span>' 
-        : '<span class="role-badge" style="background:rgba(59,130,246,0.1); color:#93c5fd; padding:2px 6px; border-radius:4px; font-size:0.75rem;">Activos</span>';
+    const miId=window.socket ? window.socket.id : null;
 
 
-        li.innerHTML = `
-            <span><span class="user-indicator"></span>${nombrePart}${esTu}</span>
-            ${esAnfitrionHTML}
+    usuarios.forEach((usuario,indice) => {
+        const esObjeto = typeof usuario === "object" && usuario !== null;
+        const nombrePart = esObjeto
+            ? (usuario.nombre || usuario.usuario || "Usuario")
+            : String(usuario);
         
-        `;
+        const esTu = esObjeto && usuario.id
+            ? usuario.id === miId
+            : nombrePart === nombreUsuario;
+
+        
+        const esAnfitrionHTML = indice === 0;
+        
+        const li = document.createElement("li");
+        li.className = "user-item";
+
+        const izquierda = document.createElement("span");
+        const punto = document.createElement("span");
+        punto.className = "user-indicator";
+        izquierda.append(punto,nombrePart + (esTu ? "(Tú)" : ""));
+        
+        const badge = document.createElement("span");
+        badge.className ="role-badge";
+        badge.style.cssText = esAnfitrion
+            ? "background:rgba(16,185,129,0.2);color:#34d399;padding:2px 6px;border-radius:4px;font-size:0.75rem;"
+            : "background:rgba(59,130,246,0.1);color:#93c5fd;padding:2px 6px;border-radius:4px;font-size:0.75rem;"
+        badge.textContent = esAnfitrion ? "Anfitrión" : "Activo";
+
+        li.append(izquierda,badge);
         userListContainer.appendChild(li);
     });
 }
@@ -229,7 +278,10 @@ function actualizarListaUsuarios(usuarios){
 function configurarEventosSocketHistorial(){
 
     const activeSocket = window.socket || (typeof socket !== 'undefined' ? socket : null);
-    if (!activeSocket) return;
+    if (!activeSocket){
+        console.warn("[Historial] No hay socket disponible; el historial no recibirá eventos");
+        return;
+    };
 
     //Lista de participantes que emite pizarra.js
     activeSocket.on('lista-participantes', (participantes) => {
@@ -238,8 +290,38 @@ function configurarEventosSocketHistorial(){
         }
     });
 
+    activeSocket.on("registro-actividad",(datos)=> {
+        if(
+            !datos ||
+            typeof datos.usuario !== "string" ||
+            typeof datos.accion !== "string"
+        ) return;
+
+        registrarActividad(datos.usuario,datos.accion,datos.fecha);
+    });
+
+    activeSocket.on("sala-unida",(datos) => {
+        if(datos && typeof datos.usuario === "string")nombreUsuario = datos.usuario;
+        registrarActividad("Sistema", `Te uniste a "${nombreSala} como ${nombreUsuario}`);
+    });
+
+    activeSocket.on("usuario-unido",(datos)=>{
+        if(datos && datos.nombre) registrarActividad(datos.nombre, "se unió a la sala");
+    });
+
+    activeSocket.on("usuario-salio",(datos) => {
+        if (datos && datos.nombre) registrarActividad(datos.nombre, "salió de la sala");
+    });
+
+    activeSocket.on("usuario-desconectado",(datos) => {
+        if(datos && datos.nombre)registrarActividad(datos.nombre, "se desconectó");
+    });
+}
+
+    /*
+
     activeSocket.on('nuevo-trazo',(datos) => {
-        /*console.log("=====DIAGNOSTICO TRAZO======");
+        console.log("=====DIAGNOSTICO TRAZO======");
         console.log("Objeto completo:",datos);
         console.log("Claves recibidas:",Object.keys(datos||{}));
 
@@ -265,7 +347,7 @@ function configurarEventosSocketHistorial(){
         console.log("AUTOR FINAL:",autorTrazo);
 
         if(!t) return;
-        procesarOperacionHistorial(t,autorTrazo.trim());*/
+        procesarOperacionHistorial(t,autorTrazo.trim());
         console.log("[Cliente historial]Datos recibidos del servidor:",datos);
 
         if(!datos || !datos.trazo)return;
@@ -328,7 +410,7 @@ function procesarOperacionHistorial(t,actor){
 
 
 //FUNCT mostrar notificaciones toast
-/*
+
 function mostrarNotificacion(mensaje, tipo = 'info'){
     if (!toastContaineer) return;
 
@@ -370,6 +452,4 @@ function mostrarNotificacion(mensaje, tipo = 'info'){
         setTimeout(() => toast.remove(),300);
     },4000);
 
-}
-*/
-
+}*/
