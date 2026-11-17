@@ -81,7 +81,7 @@ function registrarActividad(usuario,accion,fecha){
     p.style.cssText = "margin:2px 0 0 0;color:#cbd5e1;";
 
     const autor=document.createElement("strong");
-    autor.textContent=`${usuario}`;
+    autor.textContent=`${usuario}:`;
 
     p.append(autor,` ${accion}`);
     item.append(spanHora,p);
@@ -99,7 +99,7 @@ function avisarExportacion(formato){
     const s = window.socket;
 
     if (s && s.connected){
-        s.emit("registrar-exportacion",{ sala: nombreSala,formato});
+        s.emit("registrar-exportacion", { sala: nombreSala,formato});
     }else{
         registrarActividad(nombreUsuario || "Usuario",`Exportó la pizarra como ${formato}`);
     }
@@ -108,9 +108,8 @@ function avisarExportacion(formato){
 function configurarExportaciones(){
     const btnExportPng = document.getElementById('btnExportarPng');
     const btnExportPdf = document.getElementById('btnExportarPdf');
+
     //PNG
-
-
     if(btnExportPng){
         btnExportPng.addEventListener('click',(e) => {
             e.stopPropagation();
@@ -253,7 +252,7 @@ function actualizarListaUsuarios(usuarios){
             : nombrePart === nombreUsuario;
 
         
-        const esAnfitrionHTML = indice === 0;
+        const esAnfitrion = indice === 0;
         
         const li = document.createElement("li");
         li.className = "user-item";
@@ -281,13 +280,11 @@ function configurarEventosSocketHistorial(){
     if (!activeSocket){
         console.warn("[Historial] No hay socket disponible; el historial no recibirá eventos");
         return;
-    };
+    }
 
     //Lista de participantes que emite pizarra.js
     activeSocket.on('lista-participantes', (participantes) => {
-        if(Array.isArray(participantes)){
-            actualizarListaUsuarios(participantes);
-        }
+        if(Array.isArray(participantes))actualizarListaUsuarios(participantes);
     });
 
     activeSocket.on("registro-actividad",(datos)=> {
@@ -297,15 +294,15 @@ function configurarEventosSocketHistorial(){
             typeof datos.accion !== "string"
         ) return;
 
-        registrarActividad(datos.usuario,datos.accion,datos.fecha);
+        registrarActividad(datos.usuario, datos.accion, datos.fecha);
     });
 
-    activeSocket.on("sala-unida",(datos) => {
-        if(datos && typeof datos.usuario === "string")nombreUsuario = datos.usuario;
+    activeSocket.on("sala-unida", (datos) => {
+        if(datos && typeof datos.usuario === "string") nombreUsuario = datos.usuario;
         registrarActividad("Sistema", `Te uniste a "${nombreSala} como ${nombreUsuario}`);
     });
 
-    activeSocket.on("usuario-unido",(datos)=>{
+    activeSocket.on("usuario-unido", (datos)=>{
         if(datos && datos.nombre) registrarActividad(datos.nombre, "se unió a la sala");
     });
 
@@ -313,8 +310,8 @@ function configurarEventosSocketHistorial(){
         if (datos && datos.nombre) registrarActividad(datos.nombre, "salió de la sala");
     });
 
-    activeSocket.on("usuario-desconectado",(datos) => {
-        if(datos && datos.nombre)registrarActividad(datos.nombre, "se desconectó");
+    activeSocket.on("usuario-desconectado", (datos) => {
+        if(datos && datos.nombre) registrarActividad(datos.nombre, "se desconectó");
     });
 }
 
