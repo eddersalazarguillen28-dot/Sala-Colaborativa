@@ -1,6 +1,5 @@
 "use strict";
 
-const { Socket } = require("node:dgram");
 
 /* ==================================================
    1. CANVAS PRINCIPAL
