@@ -234,7 +234,7 @@ function configurarEventosSocketHistorial(){
 
     activeSocket.on("sala-unida", (datos) => {
         if(datos && typeof datos.usuario === "string") nombreUsuario = datos.usuario;
-        registrarActividad("Sistema", `Te uniste a "${nombreSala} como ${nombreUsuario}`);
+        registrarActividad("Sistema", `Te uniste a "${nombreSala}" como ${nombreUsuario}`);
     });
 
     activeSocket.on("usuario-unido", (datos)=>{
@@ -269,7 +269,7 @@ function configurarEventosSocketHistorial(){
 function obtenerContenedorToast(){
     let contenedor = document.getElementById("toastContainer");
     if(!contenedor){
-        let contenedor = document.createElement("div");
+        contenedor = document.createElement("div");
         contenedor.id = "toastContainer";
         contenedor.style.cssText = "position:fixed;top:16px;right:16px;z-index:9999;display:flex;"+"flex-direction:column;gap:8px;pointer-events:none;";
         document.body.appendChild(contenedor);
