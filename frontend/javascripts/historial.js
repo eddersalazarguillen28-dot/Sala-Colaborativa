@@ -165,71 +165,6 @@ function configurarExportaciones(){
     
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-//Exportación a PNG y PDF 
-/*document.addEventListener("DOMContentLoaded",() => {
-    const btnExportPng = document.getElementById('btnExportarPng');
-    const btnExportPdf = document.getElementById('btnExportarPdf');
-
-    //PNG
-
-
-    if(btnExportPng){
-        btnExportPng.addEventListener('click',(e) => {
-            e.stopPropagation();
-            const canvasLocal = document.getElementById('pizarraCanvas');
-            if(!canvasLocal) return;
-            const imageURI = canvasLocal.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.download = `pizarra-colaborativa-${Date.now()}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            registrarActividad(nombreU            link.href = imageURI;
-suario || "Usuario",'Exportó la pizarra como imagen PNG');
-        });
-
-    }
-
-    //Documento PDF
-
-    if (btnExportPdf){
-
-        btnExportPdf.addEventListener('click',(e) => {
-            e.stopPropagation();
-            //Validar librería cargada
-            if(!window.jspdf){
-                alert('Falta cargar la librería jsPDF en el HTML');
-                return;
-            }
-
-            const canvasLocal = document.getElementById('pizarraCanvas');
-            if(!canvasLocal) return;
-
-            const { jsPDF } = window.jspdf;
-            const imageURI = canvasLocal.toDataURL('image/png');
-
-            //PDF con dimensiones proporcionales del canvas
-
-            const pdf = new jsPDF({
-                orientation:canvasLocal.width > canvasLocal.height ? 'landscape' : 'portrait',
-                unit:'px',
-                format: [canvasLocal.width , canvasLocal.height]
-            });
-
-            pdf.addImage(imageURI,'PNG', 0 , 0 , canvasLocal.width , canvasLocal.height);
-            pdf.save(`pizarra-colaborativa-${Date.now()}.pdf`);
-
-            registrarActividad(nombreUsuario || "Usuario",'Exportó la pizarra como documento PDF');
-
-
-        });
-    
-    }
-
-});*/
 
 //Funcion actualizar la lista de usuarios
 function actualizarListaUsuarios(usuarios){
@@ -303,121 +238,53 @@ function configurarEventosSocketHistorial(){
     });
 
     activeSocket.on("usuario-unido", (datos)=>{
-        if(datos && datos.nombre) registrarActividad(datos.nombre, "se unió a la sala");
+        if(datos && datos.nombre){
+            registrarActividad(datos.nombre, "se unió a la sala");
+            mostrarNotificacion(`${datos.nombre} se unió a la sala`, "unirse");
+
+        }
     });
 
     activeSocket.on("usuario-salio",(datos) => {
-        if (datos && datos.nombre) registrarActividad(datos.nombre, "salió de la sala");
+        if (datos && datos.nombre){
+            registrarActividad(datos.nombre, "salió de la sala");
+             mostrarNotificacion(`${datos.nombre} salió de la sala`, "salir");
+
+        }
     });
 
     activeSocket.on("usuario-desconectado", (datos) => {
-        if(datos && datos.nombre) registrarActividad(datos.nombre, "se desconectó");
+        if(datos && datos.nombre){
+             registrarActividad(datos.nombre, "se desconectó");
+              mostrarNotificacion(`${datos.nombre} se desconectó`, "salir");
+            }
     });
 }
 
-    /*
-
-    activeSocket.on('nuevo-trazo',(datos) => {
-        console.log("=====DIAGNOSTICO TRAZO======");
-        console.log("Objeto completo:",datos);
-        console.log("Claves recibidas:",Object.keys(datos||{}));
-
-        const t = datos?.trazo;
-
-        console.log("Trazo recibido:",t);
-        console.log("Nombre en datos.usuario:",datos?.usuario);
-        console.log("Nombre en datos.nombreUusario",datos?.nombreUsuario);
-        console.log("Nombre en trazo.u:",t?.u);
-        console.log("Nombre en trazo.usuario:",t?.usuario);
-        console.log("Tipo de trazo.u:",typeof t?.u);
-
-        const autorTrazo = [
-            datos?.nombreUsuario,
-            datos?.usuario,
-            t?.nombreUsuario,
-            t?.usuario,
-            t?.u
-        ].find(nombre =>
-            typeof nombre === "string" && nombre.trim() !==""
-        ) || "Usuario desconocidp";
-
-        console.log("AUTOR FINAL:",autorTrazo);
-
-        if(!t) return;
-        procesarOperacionHistorial(t,autorTrazo.trim());
-        console.log("[Cliente historial]Datos recibidos del servidor:",datos);
-
-        if(!datos || !datos.trazo)return;
-
-        const t = datos.trazo;
-
-        const autorTrazo = [
-            datos.nombreUsuario,
-            datos.usuario,
-            t.nombreUsuario,
-            t.usuario,
-            t.u
-        ].find(nombre => 
-            typeof nombre === "string" && nombre.trim() !== ""
-        )|| "Usuario desconocido";
-
-        console.log("[Cliente Historial] Autor identificado:",autorTrazo);
-        procesarOperacionHistorial(t,autorTrazo.trim());
-    });
-
-    activeSocket.on('pizarra-limpiada',() =>{
-        registrarActividad('Sistema','Se limpió toda la pizarra');
-    });
-
-    //Cuando el ususario entra a la sala
-    activeSocket.on("usuario-unido", (datos) => {
-        if(datos && datos.nombre){
-            registrarActividad(datos.nombre,"se unió a la sala");
-        }
-    });
-
-    //Cuando un usuario sale de la sala 
-    activeSocket.on('usuario-salido',(datos) => {
-        if(datos && datos.nombre){
-            registrarActividad(datos.nombre,"salió de la sala");
-        }
-    });
-
-    activeSocket.on("usuario-desconectado",(datos)=>{
-        if(datos && datos.nombre){
-            registrarActividad(datos.nombre,"se desconectó");
-        }
-    });
-
-}
-
-function procesarOperacionHistorial(t,actor){
-    if (t.op === 'agregar' || t.op === 'estado'){
-        registrarActividad(actor , 'Agregó un elemento a la pizarra');
-    }else if (t.op === 'actualizar'){
-        registrarActividad(actor, 'Modificó un elemento de la pizarra');
-    }else if(t.op === 'eliminar'){
-        registrarActividad(actor,'Eliminó un elemento de la pizarra');
-    }else if(t.op === 'inicio' && t.el){
-        const tipoObjeto = t.el.t === 'borrador' ? 'borrador' : (t.el.t === 'poligono' || t.el.t === 'elipse' || t.el.t === 'linea' ? 'figura geométrica' : 'trazo');
-        registrarActividad(actor, `Comenzó a dibujar un ${tipoObjeto}`);
-    }
-
-}
+    
 
 
 //FUNCT mostrar notificaciones toast
 
+function obtenerContenedorToast(){
+    let contenedor = document.getElementById("toastContainer");
+    if(!contenedor){
+        let contenedor = document.createElement("div");
+        contenedor.id = "toastContainer";
+        contenedor.style.cssText = "position:fixed;top:16px;right:16px;z-index:9999;display:flex;"+"flex-direction:column;gap:8px;pointer-events:none;";
+        document.body.appendChild(contenedor);
+    }
+    return contenedor;
+}
+
+
 function mostrarNotificacion(mensaje, tipo = 'info'){
-    if (!toastContaineer) return;
+    const colores={unirse:"#10b981", salir:"#ef4444",info:"#3b82f6"};
 
     const toast = document.createElement('div');
 
-    //Colores dinámicos segun el tipo de evento
-    const bgColor = tipo === 'join' ? '#10b981' : '#ef4444';
-
     toast.style.cssText = `
-    background-color: ${bgColor};
+    background: ${colores[tipo] || colores.info};
     color: white;
     padding: 10px 14px;
     border-radius: 6px;
@@ -429,19 +296,20 @@ function mostrarNotificacion(mensaje, tipo = 'info'){
     align-items:center;
     justify-content:space-between;
     min-width:220px;
-    margin-bottom:8px;
+    pointer-events:auto;
     `;
+    const texto = document.createElement("span");
+    texto.textContent = mensaje;
+    const cerrar = document.createElement("button");
+    cerrar.type = "button";
+    cerrar.textContent="x";
+    cerrar.style.cssText = "background:transparent; border:none; color:white; font-size:1rem; cursor:pointer; margin-left:10px; "
+    cerrar.addEventListener("click",() => toast.remove());
+    toast.append(texto,cerrar);
+    obtenerContenedorToast().appendChild(toast);
 
-    toast.innerHTML = `
-        <span>${mensaje}</span>
-        <button style="background:transparent; border:none; color:white; font-size:1rem; cursor:pointer; margin-left:10px; ">&times;</button>
-    `;
 
-    //btn cerrar manualmente el toast
-    toast.querySelector('button').addEventListener('click',() => toast.remove());
-    toastContaineer.appendChild(toast);
-
-    setTimeout(() => toast.style.opacity = '1',10);
+    setTimeout(() => {toast.style.opacity = '1';}, 10);
 
     //Quitar después de 4 segundos
     setTimeout(()=>{
@@ -449,4 +317,4 @@ function mostrarNotificacion(mensaje, tipo = 'info'){
         setTimeout(() => toast.remove(),300);
     },4000);
 
-}*/
+}
